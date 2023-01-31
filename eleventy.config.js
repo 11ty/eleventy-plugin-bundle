@@ -41,6 +41,7 @@ module.exports = function(eleventyConfig, options = {}) {
 		options.bundleNames.forEach(name => {
 			managers[name] = new CodeManager(name);
 
+			// e.g. `css` shortcode to add code to page bundle
 			let addShortcodeName = name;
 			if(options.shortcodes.add && options.shortcodes.add[name] !== undefined) {
 				addShortcodeName = options.shortcodes.add[name];
@@ -54,6 +55,7 @@ module.exports = function(eleventyConfig, options = {}) {
 				});
 			}
 
+			// e.g. `getPageCss` shortcode to get code in current page bundle
 			let getShortcodeName;
 			if(options.shortcodes.get && options.shortcodes.get[name] !== undefined) {
 				getShortcodeName = options.shortcodes.get[name];
@@ -63,6 +65,7 @@ module.exports = function(eleventyConfig, options = {}) {
 			if(getShortcodeName) {
 				isTransformNeeded = true;
 
+				// bucket can be an array
 				eleventyConfig.addShortcode(getShortcodeName, function getContent(bucket) {
 					return OutOfOrderRender.getAssetKey(name, bucket);
 				});

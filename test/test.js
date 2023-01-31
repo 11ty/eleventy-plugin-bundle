@@ -126,3 +126,13 @@ test("CSS, get two buckets at once, reverse order", async t => {
 * { color: red; }
 * { color: orange; }</style>`); // note that blue is only listed once, we de-dupe entries across buckets
 });
+
+test("CSS, get two buckets at once (comma separated list)", async t => {
+	// automatically uses eleventy.config.js in root
+	let elev = new Eleventy("test/stubs/buckets-get-multiple-comma-sep/");
+	let results = await elev.toJSON();
+	t.deepEqual(results[0].content, `<style>* { color: blue; }
+* { color: orange; }
+* { color: red; }</style>`); // note that blue is only listed once, we de-dupe entries across buckets
+});
+

@@ -1,0 +1,5 @@
+{%- css "defer" %}* { color: blue; }{% endcss %}
+{%- css %}* { color: blue; }{% endcss %}
+{%- css "defer" %}* { color: red; }{% endcss %}
+{%- css %}* { color: orange; }{% endcss -%}
+<style>{% getPageCss "default,defer" %}</style>
