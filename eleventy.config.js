@@ -14,7 +14,7 @@ function normalizeOptions(options) {
 
 	options = Object.assign({
 		// Plugin defaults
-		bundles: ["css", "js", "svg"],
+		bundles: ["css", "js", "html"],
 		toFileDirectory: "bundle",
 	}, options);
 
