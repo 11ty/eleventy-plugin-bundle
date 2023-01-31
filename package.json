@@ -1,0 +1,46 @@
+{
+	"name": "@11ty/eleventy-plugin-bundle",
+	"version": "0.0.1",
+	"description": "Bundles of code, bundles of joy.",
+	"main": "eleventyWebcPlugin.js",
+	"scripts": {
+		"sample": "npx @11ty/eleventy --config=sample/sample-config.js --input=sample",
+		"test": "npx ava"
+	},
+	"publishConfig": {
+		"access": "public"
+	},
+	"license": "MIT",
+	"engines": {
+		"node": ">=14.18"
+	},
+	"11ty": {
+		"compatibility": ">=2.0.0-beta.1"
+	},
+	"funding": {
+		"type": "opencollective",
+		"url": "https://opencollective.com/11ty"
+	},
+	"keywords": [
+		"eleventy",
+		"eleventy-plugin"
+	],
+	"author": {
+		"name": "Zach Leatherman",
+		"email": "zachleatherman@gmail.com",
+		"url": "https://zachleat.com/"
+	},
+	"ava": {
+		"failFast": true,
+		"files": [
+			"./test/*.js"
+		]
+	},
+	"devDependencies": {
+		"@11ty/eleventy": "2.0.0-beta.2",
+		"ava": "^5.1.0"
+	},
+	"dependencies": {
+		"debug": "^4.3.4"
+	}
+}
