@@ -39,6 +39,10 @@ class CodeManager {
 
 	getForPage(pageUrl, bucket = "default") {
 		if(this.pages[pageUrl]) {
+			if(typeof bucket === "string") {
+				bucket = bucket.split(",");
+			}
+
 			debug("Retrieving %o for %o (bucket: %o)", this.name, pageUrl, bucket);
 			let set = new Set();
 			if(Array.isArray(bucket)) {

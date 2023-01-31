@@ -1,0 +1,6 @@
+{%- css %}* { color: blue; }{% endcss %}
+{%- css %}* { color: red; }{% endcss %}
+{%- css %}* { color: blue; }{% endcss %}
+{%- css %}* { color: orange; }/* lololol */{% endcss -%}
+<style>{% getBundle "css" %}</style>
+<link rel="stylesheet" href="{% getBundleFile "css" %}">

@@ -1,7 +1,7 @@
-<style>{% getPageCss %}</style>
+<style>{% getBundle "css" %}</style>
 {%- css %}* { color: blue; }{% endcss %}
-<style>{% getPageCss %}</style>
+<style>{% getBundle "css" %}</style>
 {%- css %}* { color: blue; }{% endcss %}
 {%- css %}* { color: red; }{% endcss %}
-<style>{% getPageCss %}</style>
+<style>{% getBundle "css" %}</style>
 {%- css %}* { color: orange; }{% endcss %}

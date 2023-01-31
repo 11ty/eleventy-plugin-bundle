@@ -7,4 +7,4 @@ buckets:
 {%- css %}* { color: blue; }{% endcss %}
 {%- css "defer" %}* { color: red; }{% endcss %}
 {%- css %}* { color: orange; }{% endcss -%}
-<style>{% getPageCss buckets %}</style>
+<style>{% getBundle "css", buckets %}</style>

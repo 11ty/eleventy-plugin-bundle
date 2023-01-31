@@ -2,4 +2,4 @@
 {%- css %}* { color: blue; }{% endcss %}
 {%- css "defer" %}* { color: red; }{% endcss %}
 {%- css %}* { color: orange; }{% endcss -%}
-<style>{% getPageCss "default,defer" %}</style>
+<style>{% getBundle "css", "default,defer" %}</style>

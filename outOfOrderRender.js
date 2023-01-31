@@ -1,5 +1,5 @@
 /* This class defers any `bundleGet` calls to a post-build transform step,
- * to allow `getPageCss` to be called before all of the `css` additions have been processed
+ * to allow `getBundle` to be called before all of the `css` additions have been processed
  */
 class OutOfOrderRender {
 	static SPLIT_REGEX = /(\/\*__EleventyBundle:[^:]*:[^:]*:EleventyBundle__\*\/)/;
@@ -48,7 +48,7 @@ class OutOfOrderRender {
 			if(!this.managers[name]) {
 				throw new Error(`No asset manager found for ${name}. Known keys: ${Object.keys(this.managers)}`);
 			}
-			return this.managers[name].getForPage(url, bucket.split(","));
+			return this.managers[name].getForPage(url, bucket);
 		}).join("");
 	}
 }

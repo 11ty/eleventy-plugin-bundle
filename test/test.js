@@ -1,4 +1,5 @@
 const test = require("ava");
+const fs = require("fs");
 const Eleventy = require("@11ty/eleventy");
 
 test("CSS (Nunjucks)", async t => {
@@ -136,3 +137,40 @@ test("CSS, get two buckets at once (comma separated list)", async t => {
 * { color: red; }</style>`); // note that blue is only listed once, we de-dupe entries across buckets
 });
 
+test("toFile Filter (no writes)", async t => {
+	// automatically uses eleventy.config.js in root
+	let elev = new Eleventy("test/stubs/to-file/");
+	let results = await elev.toJSON();
+	t.deepEqual(results[0].content, `<style>* { color: blue; }
+* { color: red; }
+* { color: orange; }/* lololol */</style>
+<link rel="stylesheet" href="/bundle/AZBTWWtF0t.css">`); // note that blue is only listed once, we de-dupe entries across buckets
+
+	// does *not* write to the file system because of `toJSON` usage above.
+	t.falsy(fs.existsSync("./_site/bundle/AZBTWWtF0t.css"))
+});
+
+test("toFile Filter (write files)", async t => {
+	// automatically uses eleventy.config.js in root
+	let elev = new Eleventy("test/stubs/to-file-write/", undefined, {
+		config: function(eleventyConfig) {
+			eleventyConfig.setQuietMode(true);
+		}
+	});
+
+	await elev.write();
+
+	t.is(fs.readFileSync("./_site/index.html", "utf8"), `<style>* { color: blue; }
+* { color: red; }
+* { color: orange; }/* lololol2 */</style>
+<link rel="stylesheet" href="/bundle/Es4dSlOfrv.css">`); // note that blue is only listed once, we de-dupe entries across buckets
+
+	// does write to the file system because of `write` usage above.
+	t.true(fs.existsSync("./_site/bundle/Es4dSlOfrv.css"));
+
+	fs.unlinkSync("./_site/index.html");
+	fs.unlinkSync("./_site/bundle/Es4dSlOfrv.css");
+
+	t.false(fs.existsSync("./_site/index.html"));
+	t.false(fs.existsSync("./_site/bundle/Es4dSlOfrv.css"));
+});
