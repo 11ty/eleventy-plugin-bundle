@@ -17,7 +17,7 @@ function normalizeOptions(options) {
 
 	options = Object.assign({
 		// Plugin defaults
-		bundleNames: ["css", "js", "svg"],
+		bundles: ["css", "js", "svg"],
 	}, options);
 
 	options.shortcodes = shortcodes;
@@ -37,8 +37,8 @@ module.exports = function(eleventyConfig, options = {}) {
 	let managers = {};
 	let isTransformNeeded = false;
 
-	if(Array.isArray(options.bundleNames)) {
-		options.bundleNames.forEach(name => {
+	if(Array.isArray(options.bundles)) {
+		options.bundles.forEach(name => {
 			managers[name] = new CodeManager(name);
 
 			// e.g. `css` shortcode to add code to page bundle
