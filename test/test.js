@@ -201,3 +201,10 @@ test("toFile Filter (write files, out of order)", async t => {
 	t.false(fs.existsSync("./_site/to-file-ordering/index.html"));
 	t.false(fs.existsSync("./_site/bundle/6_wo_c5eqX.css"));
 });
+
+test("Bundle in Layout file", async t => {
+	// automatically uses eleventy.config.js in root
+	let elev = new Eleventy("test/stubs/bundle-in-layout/");
+	let results = await elev.toJSON();
+	t.deepEqual(results[0].content, `<!doctype html><html><head><link href="https://v1.opengraph.11ty.dev" rel="preconnect" crossorigin></head></html>`);
+});
