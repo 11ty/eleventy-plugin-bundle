@@ -230,9 +230,9 @@ This example assumes you have added the [Render plugin](https://www.11ty.dev/doc
 
 ```html
 {% css %}
-	{% renderTemplate "scss" %}
-	h1 { .test { color: red; } }
-	{% endrenderTemplate %}
+  {% renderTemplate "scss" %}
+  h1 { .test { color: red; } }
+  {% endrenderTemplate %}
 {% endcss %}
 ```
 
