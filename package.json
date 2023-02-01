@@ -42,7 +42,8 @@
 	},
 	"devDependencies": {
 		"@11ty/eleventy": "2.0.0-beta.2",
-		"ava": "^5.1.0"
+		"ava": "^5.1.0",
+		"sass": "^1.58.0"
 	},
 	"dependencies": {
 		"debug": "^4.3.4"

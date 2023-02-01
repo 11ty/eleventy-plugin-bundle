@@ -1,6 +1,7 @@
 const test = require("ava");
 const fs = require("fs");
 const Eleventy = require("@11ty/eleventy");
+const { EleventyRenderPlugin } = Eleventy;
 
 test("CSS (Nunjucks)", async t => {
 	// automatically uses eleventy.config.js in root
@@ -207,4 +208,35 @@ test("Bundle in Layout file", async t => {
 	let elev = new Eleventy("test/stubs/bundle-in-layout/");
 	let results = await elev.toJSON();
 	t.deepEqual(results[0].content, `<!doctype html><html><head><link href="https://v1.opengraph.11ty.dev" rel="preconnect" crossorigin></head></html>`);
+});
+
+test("Bundle with render plugin", async t => {
+	const sass = require("sass");
+
+	// automatically uses eleventy.config.js in root
+	let elev = new Eleventy("test/stubs/bundle-render/", undefined, {
+		config: function(eleventyConfig) {
+			eleventyConfig.addPlugin(EleventyRenderPlugin);
+
+			eleventyConfig.addExtension("scss", {
+				outputFileExtension: "css",
+
+				compile: async function(inputContent) {
+					let result = sass.compileString(inputContent);
+
+					// This is the render function, `data` is the full data cascade
+					return async (data) => {
+						return result.css;
+					};
+				}
+			});
+		}
+	});
+	let results = await elev.toJSON();
+	t.deepEqual(results[0].content, `<!-- inbetween -->
+<style>
+h1 .test {
+  color: red;
+}
+</style>`);
 });
