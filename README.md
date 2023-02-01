@@ -1,10 +1,18 @@
-# eleventy-bundle
+# eleventy-plugin-bundle
 
 Little bundles of code, little bundles of joy.
 
 Create minimal per-page or app-level bundles of CSS, JavaScript, or HTML bundles to be included in your Eleventy project.
 
 Makes implementing Critical CSS, per-page in-use-only CSS/JS bundles, SVG icon libraries, secondary HTML content to load via XHR.
+
+## Why?
+
+This project is a minimum-viable-plugin for an asset pipeline in Eleventy. It does not perform any transpilation or code manipulation. The code you put in is the code you get out (with configurable hooks for more).
+
+For more complex features you may want to use a more full featured bundler like Vite, Parcel, Webpack, rollup, esbuild, or others.
+
+Bundling has a significant build performance cost, so take care to weigh the cost of using a full-featured Bundler against whether or not this plugin has sufficient functionality for your needs—especially as the platform matures and we see diminishing returns on code transpilation.
 
 ## Installation
 
@@ -59,7 +67,7 @@ module.exports = function(eleventyConfig) {
 
 ## Usage
 
-The following shortcodes are included in this plugin:
+The following shortcodes are provided by this plugin:
 
 * `css`, `js`, and `html` to add code to a bundle.
 * `getBundle` and `getBundleFileUrl` to get bundled code.
@@ -180,7 +188,7 @@ Here `svg` is an asset bucket on the `html` bundle.
 
 ```html
 <svg width="0" height="0" aria-hidden="true" style="position: absolute;">
-	<defs>{%- getBundle "html", "svg" %}</defs>
+	<defs>{% getBundle "html", "svg" %}</defs>
 </svg>
 
 <!-- And anywhere on your page you can add icons to the set -->
@@ -196,13 +204,47 @@ And now you can use `icon-close` in as many SVG instances as you’d like (witho
 <svg><use xlink:href="#icon-close"></use></svg>
 ```
 
+#### React Helmet-style `<head>` additions
+
+This might exist in an Eleventy layout file:
+
+```html
+<head>
+	{% getBundle "html", "head" %}
+</head>
+```
+
+And then in your content you might want to page-specific `preconnect`:
+
+```html
+{% html "head" %}
+<link href="https://v1.opengraph.11ty.dev" rel="preconnect" crossorigin>
+{% endhtml %}
+```
+
+#### Bundle Sass with the Render Plugin
+
+You can render template syntax inside of the `{% css %}` shortcode too, if you’d like to do more advanced things using Eleventy template types.
+
+This example assumes you have added the [Render plugin](https://www.11ty.dev/docs/plugins/render/) and the [`scss` custom template type](https://www.11ty.dev/docs/languages/custom/) to your Eleventy configuration file.
+
+```html
+{% css %}
+	{% renderTemplate "scss" %}
+	h1 { .test { color: red; } }
+	{% endrenderTemplate %}
+{% endcss %}
+```
+
+Now the compiled Sass is available in your default bundle and will show up in `getBundle` and `getBundleFileUrl`.
+
 #### Use with WebC
 
-TODO
+_TODO Coming soon_
 
-#### Bundling on the Edge
+#### Bundling on the [Edge](https://www.11ty.dev/docs/plugins/edge/)
 
-TODO
+_Coming soon_
 
 ## Advanced options:
 
@@ -232,11 +274,14 @@ You _could_ remove existing bundle types too, the `bundles` array content is not
 <!--
 Must haves:
 
+* plugin duplicates: if I addPlugin directly from the webc plugin and someone else also adds it, what happens?
 * Add postprocessing transforms for postcss modifications
 * guarantee that the transform runs first in order somehow (think about transform order)
+* TODOs on readme: WebC example
 
 Version Two:
 
+* Clean up the _site/bundle folder on exit?
 * Example ideas:
 	* App bundle and page bundle
 * can we make this work for syntax highlighting? or just defer to WebC for this?
