@@ -5,7 +5,7 @@ const shortcodesPlugin = require("./eleventy.shortcodes.js");
 function normalizeOptions(options) {
 	let shortcodes = Object.assign({
 		get: "getBundle",
-		toFile: "getBundleFile",
+		toFile: "getBundleFileUrl",
 		add: {
 			// use `addCss` instead of `css`
 			// css: "addCss"
