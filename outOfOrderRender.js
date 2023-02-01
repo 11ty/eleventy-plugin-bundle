@@ -2,7 +2,7 @@
  * to allow `getBundle` to be called before all of the `css` additions have been processed
  */
 class OutOfOrderRender {
-	static SPLIT_REGEX = /(\/\*__EleventyBundle:[^:]*:[^:]*:EleventyBundle__\*\/)/;
+	static SPLIT_REGEX = /(\/\*__EleventyBundle:[^:]*:[^:]*:[^:]*:EleventyBundle__\*\/)/;
 	static SEPARATOR = ":";
 
 	constructor(content) {
@@ -10,21 +10,32 @@ class OutOfOrderRender {
 		this.managers = {};
 	}
 
-	static getAssetKey(name, bucket) {
+	static getAssetKey(type, name, bucket) {
 		if(Array.isArray(bucket)) {
-			bucket = bucket.join(",")
+			bucket = bucket.join(",");
+		} else if(typeof bucket === "string") {
+		} else {
+			bucket = "";
 		}
-		return `/*__EleventyBundle:${name}:${bucket || "default"}:EleventyBundle__*/`
+		return `/*__EleventyBundle:${type}:${name}:${bucket || "default"}:EleventyBundle__*/`
 	}
 
 	setAssetManager(name, assetManager) {
 		this.managers[name] = assetManager;
 	}
 
+	setOutputDirectory(dir) {
+		this.outputDirectory = dir;
+	}
+
+	setBundleDirectory(dir) {
+		this.bundleDirectory = dir;
+	}
+
 	normalizeMatch(match) {
 		if(match.startsWith("/*__EleventyBundle:")) {
-			let [prefix, name, bucket, suffix] = match.split(OutOfOrderRender.SEPARATOR);
-			return { name, bucket };
+			let [prefix, type, name, bucket, suffix] = match.split(OutOfOrderRender.SEPARATOR);
+			return { type, name, bucket };
 		}
 		return match;
 	}
@@ -38,17 +49,31 @@ class OutOfOrderRender {
 		return ret;
 	}
 
+	setWriteToFileSystem(isWrite) {
+		this.writeToFileSystem = isWrite;
+	}
+
 	replaceAll(url) {
 		let matches = this.findAll();
 		return matches.map(match => {
 			if(typeof match === "string") {
 				return match;
 			}
-			let {name, bucket} = match;
+
+			let {type, name, bucket} = match;
 			if(!this.managers[name]) {
 				throw new Error(`No asset manager found for ${name}. Known keys: ${Object.keys(this.managers)}`);
 			}
-			return this.managers[name].getForPage(url, bucket);
+			if(type === "get") {
+				return this.managers[name].getForPage(url, bucket);
+			} else if(type === "file") {
+				return this.managers[name].writeBundle(url, bucket, {
+					output: this.outputDirectory,
+					bundle: this.bundleDirectory,
+					write: this.writeToFileSystem,
+				});
+			}
+			return "";
 		}).join("");
 	}
 }

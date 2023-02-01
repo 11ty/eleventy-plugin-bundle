@@ -1,36 +1,7 @@
-const fs = require("fs");
 const path = require("path");
-// const fsp = fs.promises;
-const { createHash } = require("crypto");
-
 const CodeManager = require("./codeManager.js");
 const OutOfOrderRender = require("./outOfOrderRender.js");
 const debug = require("debug")("Eleventy:Bundle");
-
-const hashCache = {};
-const directoryExistsCache = {};
-
-function getFilenameHash(content, hashLength = 10) {
-	if(hashCache[content]) {
-		return hashCache[content];
-	}
-
-	let hash = createHash("sha256");
-	hash.update(content);
-	let base64hash = hash.digest('base64').replace(/=/g, "").replace(/\+/g, "-").replace(/\//g, "_");
-	let filenameHash = base64hash.substring(0, hashLength);
-	hashCache[content] = filenameHash;
-	return filenameHash;
-}
-
-function getFilename(filename, extension) {
-	return filename + (extension && !extension.startsWith(".") ? `.${extension}` : "");
-}
-
-function modifyPathToUrl(dir, filename) {
-	return "/" + path.join(dir, filename).split(path.sep).join("/");
-}
-
 
 module.exports = function(eleventyConfig, options = {}) {
 	let managers = {};
@@ -76,44 +47,35 @@ module.exports = function(eleventyConfig, options = {}) {
 				throw new Error("Invalid bundle type: " + type);
 			}
 
-			return OutOfOrderRender.getAssetKey(type, bucket);
-		});
-
-		eleventyConfig.addTransform("@11ty/eleventy-bundle", function(content) {
-			if(this.page.outputPath.endsWith(".html")) {
-				let render = new OutOfOrderRender(content);
-				for(let key in managers) {
-					render.setAssetManager(key, managers[key]);
-				}
-	
-				return render.replaceAll(this.page.url);
-			}
+			return OutOfOrderRender.getAssetKey("get", type, bucket);
 		});
 	}
 
 	// write a bundle to the file system
 	if(options.shortcodes.toFile) {
-		eleventyConfig.addShortcode(options.shortcodes.toFile, function(type, bucket = "default") {
+		eleventyConfig.addShortcode(options.shortcodes.toFile, function(type, bucket) {
 			if(!type || !(type in managers)) {
 				throw new Error("Invalid bundle type: " + type);
 			}
 
-			let content = managers[type].getForPage(this.page.url, bucket.split(","));
-			let filenameHash = getFilenameHash(content);
-			let filename = getFilename(filenameHash, type);
+			return OutOfOrderRender.getAssetKey("file", type, bucket);
+		});
+	}
 
-			let dir = path.join(eleventyConfig.dir.output, options.toFileDirectory);
-			
-			if(writeToFileSystem) {
-				if(!directoryExistsCache[dir]) {
-					fs.mkdirSync(dir, { recursive: true });
-					directoryExistsCache[dir] = true;
+	if(options.shortcodes.get || options.shortcodes.toFile) {
+		eleventyConfig.addTransform("@11ty/eleventy-bundle", function(content) {
+			if((this.page.outputPath || "").endsWith(".html")) {
+				let render = new OutOfOrderRender(content);
+				for(let key in managers) {
+					render.setAssetManager(key, managers[key]);
 				}
 
-				fs.writeFileSync(path.join(dir, filename), content);
-			}
+				render.setOutputDirectory(eleventyConfig.dir.output);
+				render.setBundleDirectory(options.toFileDirectory);
+				render.setWriteToFileSystem(writeToFileSystem);
 
-			return modifyPathToUrl(options.toFileDirectory, filename);
-		})
+				return render.replaceAll(this.page.url);
+			}
+		});
 	}
 };
