@@ -109,8 +109,8 @@ Note that the bundled code is excluded!
 <style>{% getBundle "css" %}</style>
 
 <!--
-	You can add more code to the bundle after calling
-	getBundle and it will be included.
+You can add more code to the bundle after calling
+getBundle and it will be included.
 -->
 {% css %}* { color: orange; }{% endcss %}
 ```
