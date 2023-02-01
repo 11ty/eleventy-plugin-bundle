@@ -238,7 +238,7 @@ This example assumes you have added the [Render plugin](https://www.11ty.dev/doc
 
 Now the compiled Sass is available in your default bundle and will show up in `getBundle` and `getBundleFileUrl`.
 
-#### Use with WebC
+#### Use with [WebC](https://www.11ty.dev/docs/languages/webc/)
 
 _TODO Coming soon_
 
@@ -250,7 +250,7 @@ _Coming soon_
 
 ### Limitations
 
-* `html` bundles are not allowed to reference other bundles in content (yet). If this will be useful to you, please file an issue!
+* `html` bundles do not support nesting or recursion (yet). If this will be useful to you, please file an issue!
 
 ### Add your own bundle type
 
@@ -261,20 +261,21 @@ const bundlerPlugin = require("@11ty/eleventy-plugin-bundle");
 
 module.exports = function(eleventyConfig) {
 	eleventyConfig.addPlugin(bundlerPlugin, {
-		bundles: ["css", "js", "html", "mine"]
+		bundles: ["css", "js", "html", "possum"]
 	});
 };
 ```
 
-You _could_ remove existing bundle types too, the `bundles` array content is not deeply merged. The addition of `"mine"` in this array:
+You _could_ remove existing bundle types too, the `bundles` array content is not deeply merged. The addition of `"possum"` in this array:
 
-1. creates a new `mine` shortcode for adding arbitrary code to this bundle
-2. adds `"mine"` as an eligible type argument to `getBundle` and `getBundleFileUrl`
+1. creates a new `possum` shortcode for adding arbitrary code to this bundle
+2. adds `"possum"` as an eligible type argument to `getBundle` and `getBundleFileUrl`
 
 <!--
 Must haves:
 
 * plugin duplicates: if I addPlugin directly from the webc plugin and someone else also adds it, what happens?
+
 * Add postprocessing transforms for postcss modifications
 * guarantee that the transform runs first in order somehow (think about transform order)
 * TODOs on readme: WebC example
