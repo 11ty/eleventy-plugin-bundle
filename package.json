@@ -1,8 +1,8 @@
 {
 	"name": "@11ty/eleventy-plugin-bundle",
 	"version": "0.0.1",
-	"description": "Bundles of code, bundles of joy.",
-	"main": "eleventyWebcPlugin.js",
+	"description": "Little bundles of code, little bundles of joy.",
+	"main": "eleventy.config.js",
 	"scripts": {
 		"sample": "npx @11ty/eleventy --config=sample/sample-config.js --input=sample",
 		"test": "npx ava"
@@ -12,7 +12,7 @@
 	},
 	"license": "MIT",
 	"engines": {
-		"node": ">=14.18"
+		"node": ">=14"
 	},
 	"11ty": {
 		"compatibility": ">=2.0.0-beta.1"

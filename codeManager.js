@@ -46,8 +46,10 @@ class BundleFileOutput {
 				fs.mkdirSync(dir, { recursive: true });
 				directoryExistsCache[dir] = true;
 			}
-	
-			fs.writeFileSync(path.join(dir, filename), content);
+
+			let fullPath = path.join(dir, filename);
+			debug("Writing bundle %o", fullPath);
+			fs.writeFileSync(fullPath, content);
 		}
 	
 		return this.modifyPathToUrl(this.bundleDirectory, filename);

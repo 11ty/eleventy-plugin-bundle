@@ -28,7 +28,6 @@ module.exports = function(eleventyConfig, options = {}) {
 
 	let writeToFileSystem = true;
 	eleventyConfig.on("eleventy.before", async ({ outputMode }) => {
-		debug("Resetting");
 		for(let key in managers) {
 			managers[key].reset();
 		}
