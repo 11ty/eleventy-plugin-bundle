@@ -64,6 +64,8 @@ The following Universal Shortcodes (available in `njk`, `liquid`, `hbs`, `11ty.j
 * `css`, `js`, and `html` to add code to a bundle.
 * `getBundle` and `getBundleFileUrl` to get bundled code.
 
+Here’s a [real-world commit showing this in use on the `eleventy-base-blog` project](https://github.com/11ty/eleventy-base-blog/commit/c9595d8f42752fa72c66991c71f281ea960840c9?diff=split).
+
 ### Add bundle code in a Markdown file in Eleventy
 
 ```md
