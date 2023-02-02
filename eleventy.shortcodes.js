@@ -52,19 +52,19 @@ module.exports = function(eleventyConfig, options = {}) {
 	});
 
 	eleventyConfig.addTransform("@11ty/eleventy-bundle", async function(content) {
-		if((this.page.outputPath || "").endsWith(".html")) {
-			let render = new OutOfOrderRender(content);
-			for(let key in managers) {
-				render.setAssetManager(key, managers[key]);
-			}
-
-			render.setOutputDirectory(eleventyConfig.dir.output);
-			render.setBundleDirectory(options.toFileDirectory);
-			render.setWriteToFileSystem(writeToFileSystem);
-
-			return render.replaceAll(this.page);
+		if(!this.page.outputPath || typeof content !== "string") {
+			return content;
 		}
 
-		return content;
+		let render = new OutOfOrderRender(content);
+		for(let key in managers) {
+			render.setAssetManager(key, managers[key]);
+		}
+
+		render.setOutputDirectory(eleventyConfig.dir.output);
+		render.setBundleDirectory(options.toFileDirectory);
+		render.setWriteToFileSystem(writeToFileSystem);
+
+		return render.replaceAll(this.page);
 	});
 };
