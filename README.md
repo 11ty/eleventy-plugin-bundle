@@ -254,7 +254,7 @@ To add JS to a page bundle in WebC, you would use a `<script>` element in a WebC
 
 #### Modify the bundle output
 
-You can wire up your own async-friendly callbacks to transform the bundle output too. Here’s a quick example of `postcss` integration.
+You can wire up your own async-friendly callbacks to transform the bundle output too. Here’s a quick example of [`postcss` integration](https://github.com/postcss/postcss#js-api).
 
 ```js
 const bundlerPlugin = require("@11ty/eleventy-plugin-bundle");
