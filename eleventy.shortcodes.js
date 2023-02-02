@@ -1,4 +1,3 @@
-const path = require("path");
 const CodeManager = require("./codeManager.js");
 const OutOfOrderRender = require("./outOfOrderRender.js");
 const debug = require("debug")("Eleventy:Bundle");
@@ -11,18 +10,12 @@ module.exports = function(eleventyConfig, options = {}) {
 			managers[name] = new CodeManager(name);
 
 			// e.g. `css` shortcode to add code to page bundle
-			let addShortcodeName = name;
-			if(options.shortcodes.add && options.shortcodes.add[name] !== undefined) {
-				addShortcodeName = options.shortcodes.add[name];
-			}
-
-			if(addShortcodeName) {
-				eleventyConfig.addPairedShortcode(addShortcodeName, function addContent(content, bucket, urlOverride) {
-					let url = urlOverride || this.page.url;
-					managers[name].addToPage(url, content, bucket);
-					return "";
-				});
-			}
+			// These shortcode names are not configurable on purpose (for wider plugin compatibility)
+			eleventyConfig.addPairedShortcode(name, function addContent(content, bucket, urlOverride) {
+				let url = urlOverride || this.page.url;
+				managers[name].addToPage(url, content, bucket);
+				return "";
+			});
 		});
 	}
 
@@ -39,42 +32,38 @@ module.exports = function(eleventyConfig, options = {}) {
 	});
 
 	// e.g. `getBundle` shortcode to get code in current page bundle
-	if(options.shortcodes.get) {
-		// bucket can be an array
-		eleventyConfig.addShortcode(options.shortcodes.get, function getContent(type, bucket) {
-			if(!type || !(type in managers)) {
-				throw new Error("Invalid bundle type: " + type);
-			}
+	// bucket can be an array
+	// This shortcode name is not configurable on purpose (for wider plugin compatibility)
+	eleventyConfig.addShortcode("getBundle", function getContent(type, bucket) {
+		if(!type || !(type in managers)) {
+			throw new Error("Invalid bundle type: " + type);
+		}
 
-			return OutOfOrderRender.getAssetKey("get", type, bucket);
-		});
-	}
+		return OutOfOrderRender.getAssetKey("get", type, bucket);
+	});
 
 	// write a bundle to the file system
-	if(options.shortcodes.toFile) {
-		eleventyConfig.addShortcode(options.shortcodes.toFile, function(type, bucket) {
-			if(!type || !(type in managers)) {
-				throw new Error("Invalid bundle type: " + type);
+	// This shortcode name is not configurable on purpose (for wider plugin compatibility)
+	eleventyConfig.addShortcode("getBundleFileUrl", function(type, bucket) {
+		if(!type || !(type in managers)) {
+			throw new Error("Invalid bundle type: " + type);
+		}
+
+		return OutOfOrderRender.getAssetKey("file", type, bucket);
+	});
+
+	eleventyConfig.addTransform("@11ty/eleventy-bundle", function(content) {
+		if((this.page.outputPath || "").endsWith(".html")) {
+			let render = new OutOfOrderRender(content);
+			for(let key in managers) {
+				render.setAssetManager(key, managers[key]);
 			}
 
-			return OutOfOrderRender.getAssetKey("file", type, bucket);
-		});
-	}
+			render.setOutputDirectory(eleventyConfig.dir.output);
+			render.setBundleDirectory(options.toFileDirectory);
+			render.setWriteToFileSystem(writeToFileSystem);
 
-	if(options.shortcodes.get || options.shortcodes.toFile) {
-		eleventyConfig.addTransform("@11ty/eleventy-bundle", function(content) {
-			if((this.page.outputPath || "").endsWith(".html")) {
-				let render = new OutOfOrderRender(content);
-				for(let key in managers) {
-					render.setAssetManager(key, managers[key]);
-				}
-
-				render.setOutputDirectory(eleventyConfig.dir.output);
-				render.setBundleDirectory(options.toFileDirectory);
-				render.setWriteToFileSystem(writeToFileSystem);
-
-				return render.replaceAll(this.page.url);
-			}
-		});
-	}
+			return render.replaceAll(this.page.url);
+		}
+	});
 };

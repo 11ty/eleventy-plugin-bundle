@@ -1,29 +1,17 @@
 const pkg = require("./package.json");
 const shortcodesPlugin = require("./eleventy.shortcodes.js");
-const debug = require("debug")("Eleventy:Bundle");
 
-function normalizeOptions(options) {
-	let shortcodes = Object.assign({
-		get: "getBundle",
-		toFile: "getBundleFileUrl",
-		add: {
-			// use `addCss` instead of `css`
-			// css: "addCss"
-		}
-	}, options.shortcodes);
-
+function normalizeOptions(options = {}) {
 	options = Object.assign({
 		// Plugin defaults
-		bundles: ["css", "js", "html"],
+		bundles: [], // extra bundles: css, js, and html are guaranteed
 		toFileDirectory: "bundle",
 	}, options);
 
-	options.shortcodes = shortcodes;
+	options.bundles = Array.from(new Set(["css", "js", "html", ...options.bundles]));
 
 	return options;
 }
-
-let hasExecuted = false;
 
 function eleventyBundlePlugin(eleventyConfig, options = {}) {
 	try {
@@ -34,16 +22,16 @@ function eleventyBundlePlugin(eleventyConfig, options = {}) {
 
 	options = normalizeOptions(options);
 
-	eleventyConfig.on("eleventy.before", () => {
-		hasExecuted = false;
-	});
+	// TODO
+	// debug("Warning: Currently @11ty/eleventy-plugin-bundle only supports one addPlugin of this plugin per project. Subsequent adds are ignored.");
 
-	if(hasExecuted) {
-		debug("Warning: Currently @11ty/eleventy-plugin-bundle only supports one addPlugin of this plugin per project. Subsequent adds are ignored.");
-	} else {
-		hasExecuted = true;
-		shortcodesPlugin(eleventyConfig, options);
-	}
+	shortcodesPlugin(eleventyConfig, options);
 };
 
+// This plugin is used to find the package name for this plugin (used by eleventy-plugin-webc)
+Object.defineProperty(eleventyBundlePlugin, "eleventyPackage", {
+	value: pkg.name
+});
+
 module.exports = eleventyBundlePlugin;
+module.exports.normalizeOptions = normalizeOptions;

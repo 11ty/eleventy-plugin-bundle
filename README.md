@@ -47,18 +47,6 @@ module.exports = function(eleventyConfig) {
 
 		// Default bundle types
 		bundles: ["css", "js", "html"],
-
-		// Shortcode names
-		shortcodes: {
-			get: "getBundle",
-			toFile: "getBundleFileUrl",
-
-			// override bundle add names:
-			add: {
-				// use `addCss` instead of `css`
-				// css: "addCss"
-			}
-		}
 	});
 };
 ```
@@ -254,19 +242,19 @@ _Coming soon_
 
 ### Add your own bundle type
 
-If you’d like to add your own bundle types (in addition to `css`, `js`, and `html`), you can do so:
+If you’d like to add your own bundle types (in addition to the guaranteed types: `css`, `js`, and `html`), you can do so:
 
 ```js
 const bundlerPlugin = require("@11ty/eleventy-plugin-bundle");
 
 module.exports = function(eleventyConfig) {
 	eleventyConfig.addPlugin(bundlerPlugin, {
-		bundles: ["css", "js", "html", "possum"]
+		bundles: ["possum"]
 	});
 };
 ```
 
-You _could_ remove existing bundle types too, the `bundles` array content is not deeply merged. The addition of `"possum"` in this array:
+This does two things:
 
 1. creates a new `possum` shortcode for adding arbitrary code to this bundle
 2. adds `"possum"` as an eligible type argument to `getBundle` and `getBundleFileUrl`
@@ -274,11 +262,10 @@ You _could_ remove existing bundle types too, the `bundles` array content is not
 <!--
 Must haves:
 
-* plugin duplicates: if I addPlugin directly from the webc plugin and someone else also adds it, what happens?
-
-* Add postprocessing transforms for postcss modifications
+* Add postprocessing hooks for postcss modifications
 * guarantee that the transform runs first in order somehow (think about transform order)
 * TODOs on readme: WebC example
+* JavaScript API independent of eleventy
 
 Version Two:
 
