@@ -280,9 +280,6 @@ _Coming soon_
 
 ## Advanced options:
 
-### Limitations
-
-* `html` bundles do not support nesting or recursion (yet). If this will be useful to you, please file an issue!
 
 ### Add your own bundle type
 
@@ -303,15 +300,15 @@ This does two things:
 1. creates a new `possum` shortcode for adding arbitrary code to this bundle
 2. adds `"possum"` as an eligible type argument to `getBundle` and `getBundleFileUrl`
 
+### Limitations
+
+Bundles do not support nesting or recursion (yet?). If this will be useful to you, please file an issue!
+
 <!--
-Must haves:
-
-* Add postprocessing hooks for postcss modifications
-* guarantee that the transform runs first in order somehow (think about transform order)
-* JavaScript API independent of eleventy
-
 Version Two:
 
+* Think about Eleventy transform order, scenarios where this transform needs to run first.
+* JavaScript API independent of eleventy
 * Clean up the _site/bundle folder on exit?
 * Example ideas:
 	* App bundle and page bundle
