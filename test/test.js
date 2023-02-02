@@ -265,3 +265,13 @@ test("No bundling", async t => {
 	</body>
 </html>`);
 });
+
+test("Use Transforms", async t => {
+	let elev = new Eleventy("test/stubs/use-transforms/", undefined, {
+		configPath: "test/stubs/use-transforms/eleventy.config.js"
+	});
+	let results = await elev.toJSON();
+	t.deepEqual(normalize(results[0].content), `<style>* { color: blue; }
+* { color: red; }
+#id * { color: orange; }</style>`);
+});

@@ -6,9 +6,11 @@ function normalizeOptions(options = {}) {
 		// Plugin defaults
 		bundles: [], // extra bundles: css, js, and html are guaranteed
 		toFileDirectory: "bundle",
+		// post-process
+		transforms: []
 	}, options);
 
-	options.bundles = Array.from(new Set(["css", "js", "html", ...options.bundles]));
+	options.bundles = Array.from(new Set(["css", "js", "html", ...(options.bundles || [])]));
 
 	return options;
 }
@@ -21,9 +23,6 @@ function eleventyBundlePlugin(eleventyConfig, options = {}) {
 	}
 
 	options = normalizeOptions(options);
-
-	// TODO
-	// debug("Warning: Currently @11ty/eleventy-plugin-bundle only supports one addPlugin of this plugin per project. Subsequent adds are ignored.");
 
 	shortcodesPlugin(eleventyConfig, options);
 };

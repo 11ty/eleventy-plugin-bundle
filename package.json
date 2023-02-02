@@ -1,6 +1,6 @@
 {
 	"name": "@11ty/eleventy-plugin-bundle",
-	"version": "0.0.1",
+	"version": "1.0.0",
 	"description": "Little bundles of code, little bundles of joy.",
 	"main": "eleventy.config.js",
 	"scripts": {
@@ -43,6 +43,8 @@
 	"devDependencies": {
 		"@11ty/eleventy": "2.0.0-beta.2",
 		"ava": "^5.1.0",
+		"postcss": "^8.4.21",
+		"postcss-nested": "^6.0.0",
 		"sass": "^1.58.0"
 	},
 	"dependencies": {

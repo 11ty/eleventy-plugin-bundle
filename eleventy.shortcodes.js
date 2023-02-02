@@ -5,19 +5,18 @@ const debug = require("debug")("Eleventy:Bundle");
 module.exports = function(eleventyConfig, options = {}) {
 	let managers = {};
 
-	if(Array.isArray(options.bundles)) {
-		options.bundles.forEach(name => {
-			managers[name] = new CodeManager(name);
+	options.bundles.forEach(name => {
+		managers[name] = new CodeManager(name);
+		managers[name].setTransforms(options.transforms);
 
-			// e.g. `css` shortcode to add code to page bundle
-			// These shortcode names are not configurable on purpose (for wider plugin compatibility)
-			eleventyConfig.addPairedShortcode(name, function addContent(content, bucket, urlOverride) {
-				let url = urlOverride || this.page.url;
-				managers[name].addToPage(url, content, bucket);
-				return "";
-			});
+		// e.g. `css` shortcode to add code to page bundle
+		// These shortcode names are not configurable on purpose (for wider plugin compatibility)
+		eleventyConfig.addPairedShortcode(name, function addContent(content, bucket, urlOverride) {
+			let url = urlOverride || this.page.url;
+			managers[name].addToPage(url, content, bucket);
+			return "";
 		});
-	}
+	});
 
 	let writeToFileSystem = true;
 	eleventyConfig.on("eleventy.before", async ({ outputMode }) => {
@@ -52,7 +51,7 @@ module.exports = function(eleventyConfig, options = {}) {
 		return OutOfOrderRender.getAssetKey("file", type, bucket);
 	});
 
-	eleventyConfig.addTransform("@11ty/eleventy-bundle", function(content) {
+	eleventyConfig.addTransform("@11ty/eleventy-bundle", async function(content) {
 		if((this.page.outputPath || "").endsWith(".html")) {
 			let render = new OutOfOrderRender(content);
 			for(let key in managers) {
@@ -63,7 +62,7 @@ module.exports = function(eleventyConfig, options = {}) {
 			render.setBundleDirectory(options.toFileDirectory);
 			render.setWriteToFileSystem(writeToFileSystem);
 
-			return render.replaceAll(this.page.url);
+			return render.replaceAll(this.page);
 		}
 
 		return content;

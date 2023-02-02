@@ -61,6 +61,7 @@ class CodeManager {
 		this.name = name;
 		this.trimOnAdd = true;
 		this.reset();
+		this.transforms = [];
 	}
 
 	reset() {
@@ -74,6 +75,14 @@ class CodeManager {
 			return bucket.split(",");
 		}
 		return ["default"];
+	}
+
+	setTransforms(transforms) {
+		if(!Array.isArray(transforms)) {
+			throw new Error("Array expected to setTransforms");
+		}
+
+		this.transforms = transforms;
 	}
 
 	addToPage(pageUrl, code = [], bucket) {
@@ -106,33 +115,51 @@ class CodeManager {
 		}
 	}
 
-	getForPage(pageUrl, buckets) {
-		if(!this.pages[pageUrl]) {
-			debug("No bundle code found for %o on %o, %O", this.name, pageUrl, this.pages);
+	async runTransforms(str, pageData) {
+		for (let callback of this.transforms) {
+			str = await callback.call(
+				{
+					page: pageData
+				},
+				str
+			);
+		}
+
+		return str;
+	}
+
+	async getForPage(pageData, buckets) {
+		let url = pageData.url;
+		if(!this.pages[url]) {
+			debug("No bundle code found for %o on %o, %O", this.name, url, this.pages);
 			return "";
 		}
 
 		buckets = CodeManager.normalizeBuckets(buckets);
 
-		debug("Retrieving %o for %o (buckets: %o)", this.name, pageUrl, buckets);
+		debug("Retrieving %o for %o (buckets: %o)", this.name, url, buckets);
 		let set = new Set();
 		for(let b of buckets) {
-			if(!this.pages[pageUrl][b]) {
+			if(!this.pages[url][b]) {
 				// Just continue, if you retrieve code from a bucket that doesn’t exist or has no code, it will return an empty set
 				continue;
 			}
 
-			for(let entry of this.pages[pageUrl][b]) {
+			for(let entry of this.pages[url][b]) {
 				set.add(entry);
 			}
 		}
 
-		return Array.from(set).join("\n");
+		let bundleContent = Array.from(set).join("\n");
+
+		// returns promise
+		return this.runTransforms(bundleContent, pageData);
 	}
 
-	writeBundle(pageUrl, buckets, options = {}) {
-		if(!this.pages[pageUrl]) {
-			debug("No bundle code found for %o on %o, %O", this.name, pageUrl, this.pages);
+	async writeBundle(pageData, buckets, options = {}) {
+		let url = pageData.url;
+		if(!this.pages[url]) {
+			debug("No bundle code found for %o on %o, %O", this.name, url, this.pages);
 			return "";
 		}
 
@@ -140,7 +167,7 @@ class CodeManager {
 
 		buckets = CodeManager.normalizeBuckets(buckets);
 
-		let content = this.getForPage(pageUrl, buckets);
+		let content = await this.getForPage(pageData, buckets);
 
 		let writer = new BundleFileOutput(output, bundle);
 		return writer.writeBundle(content, this.name, write);

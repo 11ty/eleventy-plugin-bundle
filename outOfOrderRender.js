@@ -53,9 +53,10 @@ class OutOfOrderRender {
 		this.writeToFileSystem = isWrite;
 	}
 
-	replaceAll(url) {
+	async replaceAll(pageData) {
 		let matches = this.findAll();
-		return matches.map(match => {
+
+		let content = await Promise.all(matches.map(match => {
 			if(typeof match === "string") {
 				return match;
 			}
@@ -65,16 +66,20 @@ class OutOfOrderRender {
 				throw new Error(`No asset manager found for ${name}. Known keys: ${Object.keys(this.managers)}`);
 			}
 			if(type === "get") {
-				return this.managers[name].getForPage(url, bucket);
+				// returns promise
+				return this.managers[name].getForPage(pageData, bucket);
 			} else if(type === "file") {
-				return this.managers[name].writeBundle(url, bucket, {
+				// returns promise
+				return this.managers[name].writeBundle(pageData, bucket, {
 					output: this.outputDirectory,
 					bundle: this.bundleDirectory,
 					write: this.writeToFileSystem,
 				});
 			}
 			return "";
-		}).join("");
+		}));
+
+		return content.join("");
 	}
 }
 
