@@ -4,7 +4,7 @@
 	"description": "Little bundles of code, little bundles of joy.",
 	"main": "eleventy.bundle.js",
 	"scripts": {
-		"sample": "DEBUG=Eleventy:Bundle npx @11ty/eleventy --config=sample/sample-config.js --input=sample",
+		"sample": "DEBUG=Eleventy:Bundle npx @11ty/eleventy@2.0.0-beta.3 --config=sample/sample-config.js --input=sample",
 		"test": "npx ava"
 	},
 	"publishConfig": {
@@ -41,7 +41,6 @@
 		]
 	},
 	"devDependencies": {
-		"@11ty/eleventy": "2.0.0-beta.2",
 		"ava": "^5.1.0",
 		"postcss": "^8.4.21",
 		"postcss-nested": "^6.0.0",
