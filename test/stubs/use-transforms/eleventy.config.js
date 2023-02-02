@@ -9,7 +9,7 @@ module.exports = function(eleventyConfig) {
 				setTimeout(() => resolve(content), 50);
 			});
 		}, async function(content) {
-			let result = await postcss([postcssNested]).process(content, { from: this.page.inputPath, to: this.page.outputPath })
+			let result = await postcss([postcssNested]).process(content, { from: null, to: null })
 			return result.css;
 		}]
 	});

@@ -167,6 +167,7 @@ class CodeManager {
 
 		buckets = CodeManager.normalizeBuckets(buckets);
 
+		// TODO the bundle output URL might be useful in the transforms for sourcemaps
 		let content = await this.getForPage(pageData, buckets);
 
 		let writer = new BundleFileOutput(output, bundle);

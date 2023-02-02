@@ -47,6 +47,10 @@ module.exports = function(eleventyConfig) {
 
 		// Default bundle types
 		bundles: ["css", "js", "html"],
+
+		// Array of async-friendly callbacks to transform bundle content.
+		// Works with getBundle and getBundleFileUrl
+		transforms: []
 	});
 };
 ```
@@ -247,6 +251,28 @@ To add JS to a page bundle in WebC, you would use a `<script>` element in a WebC
 * Existing calls via WebC helpers `getCss` or `getJs` (e.g. `<style @raw="getCss(page.url)">`) have been wired up to `getBundle('css')` and `getBundle('js')` automatically.
 	* For consistency, you may prefer using the bundle plugin method names everywhere: `<style @raw="getBundle('css')">` and `<script @raw="getBundle('js')">` both work fine.
 * Outside of WebC, the [Universal Filters `webcGetCss` and `webcGetJs`](https://www.11ty.dev/docs/languages/webc/#css-and-js-(bundler-mode)) were available to access CSS and JS bundles but are considered deprecated in favor of new bundle plugin Universal Shortcodes `getBundle("css")` and `getBundle("js")` respectively.
+
+#### Modify the bundle output
+
+You can wire up your own async-friendly callbacks to transform the bundle output too. Here’s a quick example of `postcss` integration.
+
+```js
+const bundlerPlugin = require("@11ty/eleventy-plugin-bundle");
+const postcss = require("postcss");
+const postcssNested = require("postcss-nested");
+
+module.exports = function(eleventyConfig) {
+	eleventyConfig.addPlugin(bundlerPlugin, {
+		transforms: [
+			async function(content) {
+				// Same as Eleventy transforms, this.page is available here.
+				let result = await postcss([postcssNested]).process(content, { from: this.page.inputPath, to: null });
+				return result.css;
+			}
+		]
+	});
+};
+```
 
 #### Bundling on the [Edge](https://www.11ty.dev/docs/plugins/edge/)
 
