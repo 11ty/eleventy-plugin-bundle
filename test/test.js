@@ -168,13 +168,13 @@ test("toFile Filter (write files)", async t => {
 
 	await elev.write();
 
-	t.is(fs.readFileSync("_site/to-file-write/index.html", "utf8"), `<style>* { color: blue; }
+	t.is(normalize(fs.readFileSync("_site/to-file-write/index.html", "utf8")), `<style>* { color: blue; }
 * { color: red; }
 * { color: orange; }/* lololol2 */</style>
 <link rel="stylesheet" href="/bundle/Es4dSlOfrv.css">`); // note that blue is only listed once, we de-dupe entries across buckets
 
 	// does write to the file system because of `write` usage above.
-	t.is(fs.readFileSync("_site/bundle/Es4dSlOfrv.css", "utf8"), `* { color: blue; }
+	t.is(normalize(fs.readFileSync("_site/bundle/Es4dSlOfrv.css", "utf8")), `* { color: blue; }
 * { color: red; }
 * { color: orange; }/* lololol2 */`);
 
@@ -195,12 +195,12 @@ test("toFile Filter (write files, out of order)", async t => {
 
 	await elev.write();
 
-	t.is(fs.readFileSync("./_site/to-file-ordering/index.html", "utf8"), `<style>* { color: blue; }
+	t.is(normalize(fs.readFileSync("./_site/to-file-ordering/index.html", "utf8")), `<style>* { color: blue; }
 * { color: rebeccapurple; }</style>
 <link rel="stylesheet" href="/bundle/6_wo_c5eqX.css">`); // note that blue is only listed once, we de-dupe entries across buckets
 
 	// does write to the file system because of `write` usage above.
-	t.is(fs.readFileSync("./_site/bundle/6_wo_c5eqX.css", "utf8"), `* { color: blue; }
+	t.is(normalize(fs.readFileSync("./_site/bundle/6_wo_c5eqX.css", "utf8")), `* { color: blue; }
 * { color: rebeccapurple; }`);
 
 	fs.unlinkSync("./_site/to-file-ordering/index.html");
