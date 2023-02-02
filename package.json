@@ -2,7 +2,7 @@
 	"name": "@11ty/eleventy-plugin-bundle",
 	"version": "1.0.0",
 	"description": "Little bundles of code, little bundles of joy.",
-	"main": "eleventy.config.js",
+	"main": "eleventy.bundle.js",
 	"scripts": {
 		"sample": "DEBUG=Eleventy:Bundle npx @11ty/eleventy --config=sample/sample-config.js --input=sample",
 		"test": "npx ava"

@@ -8,11 +8,11 @@ Makes implementing Critical CSS, per-page in-use-only CSS/JS bundles, SVG icon l
 
 ## Why?
 
-This project is a minimum-viable-plugin for an asset pipeline in Eleventy. It does not perform any transpilation or code manipulation. The code you put in is the code you get out (with configurable hooks for more).
+This project is a minimum-viable-bundler and asset pipeline in Eleventy. It does not perform any transpilation or code manipulation (by default). The code you put in is the code you get out (with configurable `transforms` if you’d like to modify the code).
 
-For more complex features you may want to use a more full featured bundler like Vite, Parcel, Webpack, rollup, esbuild, or others.
+For more larger, more complex use cases you may want to use a more full featured bundler like Vite, Parcel, Webpack, rollup, esbuild, or others.
 
-Bundling has a significant build performance cost, so take care to weigh the cost of using a full-featured Bundler against whether or not this plugin has sufficient functionality for your needs—especially as the platform matures and we see diminishing returns on code transpilation.
+But do note that a full-featured bundler has a significant build performance cost, so take care to weigh the cost of using that style of bundler against whether or not this plugin has sufficient functionality for your use case—especially as the platform matures and we see diminishing returns on code transpilation (ES modules everywhere).
 
 ## Installation
 
