@@ -241,3 +241,21 @@ h1 .test {
 }
 </style>`);
 });
+
+test("No bundling", async t => {
+	// automatically uses eleventy.config.js in root
+	let elev = new Eleventy("test/stubs/no-bundles/");
+	let results = await elev.toJSON();
+	t.deepEqual(results[0].content, `<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1.0">
+		<meta name="description" content="">
+		<title></title>
+	</head>
+	<body>
+
+	</body>
+</html>`);
+});

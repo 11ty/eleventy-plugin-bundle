@@ -65,5 +65,7 @@ module.exports = function(eleventyConfig, options = {}) {
 
 			return render.replaceAll(this.page.url);
 		}
+
+		return content;
 	});
 };
