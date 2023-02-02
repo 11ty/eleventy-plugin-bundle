@@ -39,7 +39,7 @@ function eleventyBundlePlugin(eleventyConfig, options = {}) {
 	});
 
 	if(hasExecuted) {
-		debug("Warning: You can only addPlugin @11ty/eleventy-plugin-bundle once per project. Subsequent adds are ignored.");
+		debug("Warning: Currently @11ty/eleventy-plugin-bundle only supports one addPlugin of this plugin per project. Subsequent adds are ignored.");
 	} else {
 		hasExecuted = true;
 		shortcodesPlugin(eleventyConfig, options);
