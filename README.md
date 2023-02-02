@@ -59,7 +59,7 @@ module.exports = function(eleventyConfig) {
 
 ## Usage
 
-The following shortcodes are provided by this plugin:
+The following Universal Shortcodes (available in `njk`, `liquid`, `hbs`, `11ty.js`, and `webc`) are provided by this plugin:
 
 * `css`, `js`, and `html` to add code to a bundle.
 * `getBundle` and `getBundleFileUrl` to get bundled code.
@@ -232,7 +232,7 @@ Now the compiled Sass is available in your default bundle and will show up in `g
 
 #### Use with [WebC](https://www.11ty.dev/docs/languages/webc/)
 
-Starting with `@11ty/eleventy-plugin-webc@0.9.0` this plugin is used by default in the Eleventy WebC plugin. Specifically, [WebC Bundler Mode](https://www.11ty.dev/docs/languages/webc/#css-and-js-(bundler-mode)) now uses the bundle plugin under the hood.
+Starting with `@11ty/eleventy-plugin-webc@0.9.0` ([coming soon](https://github.com/11ty/eleventy-plugin-webc/issues/48)) this plugin is used by default in the Eleventy WebC plugin. Specifically, [WebC Bundler Mode](https://www.11ty.dev/docs/languages/webc/#css-and-js-(bundler-mode)) now uses the bundle plugin under the hood.
 
 To add CSS to a page bundle in WebC, you would use a `<style>` element in a WebC page or component:
 
