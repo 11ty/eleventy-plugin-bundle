@@ -228,7 +228,24 @@ Now the compiled Sass is available in your default bundle and will show up in `g
 
 #### Use with [WebC](https://www.11ty.dev/docs/languages/webc/)
 
-_TODO Coming soon_
+Starting with `@11ty/eleventy-plugin-webc@0.9.0` this plugin is used by default in the Eleventy WebC plugin. Specifically, [WebC Bundler Mode](https://www.11ty.dev/docs/languages/webc/#css-and-js-(bundler-mode)) now uses the bundle plugin under the hood.
+
+To add CSS to a page bundle in WebC, you would use a `<style>` element in a WebC page or component:
+
+```html
+<style>/* This is bundled. */</style>
+<style webc:keep>/* Do not bundle me—leave as is */</style>
+```
+
+To add JS to a page bundle in WebC, you would use a `<script>` element in a WebC page or component:
+
+```html
+<script>/* This is bundled. */</script>
+<script webc:keep>/* Do not bundle me—leave as is */</script>
+```
+
+* Existing calls via WebC helpers `getCss` or `getJs` (e.g. `<style @raw="getCss(page.url)">`) have been wired up to this plugin behind the scenes.
+* Outside of WebC, the [Universal Filters `webcGetCss` and `webcGetJs`](https://www.11ty.dev/docs/languages/webc/#css-and-js-(bundler-mode)) were available to access CSS and JS bundles but are considered deprecated in favor of new bundle plugin Universal Shortcodes `getBundle("css")` and `getBundle("js")` respectively.
 
 #### Bundling on the [Edge](https://www.11ty.dev/docs/plugins/edge/)
 
@@ -264,7 +281,6 @@ Must haves:
 
 * Add postprocessing hooks for postcss modifications
 * guarantee that the transform runs first in order somehow (think about transform order)
-* TODOs on readme: WebC example
 * JavaScript API independent of eleventy
 
 Version Two:
