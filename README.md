@@ -2,9 +2,9 @@
 
 Little bundles of code, little bundles of joy.
 
-Create minimal per-page or app-level bundles of CSS, JavaScript, or HTML bundles to be included in your Eleventy project.
+Create minimal per-page or app-level bundles of CSS, JavaScript, or HTML to be included in your Eleventy project.
 
-Makes implementing Critical CSS, per-page in-use-only CSS/JS bundles, SVG icon libraries, secondary HTML content to load via XHR.
+Makes it easy to implement Critical CSS, in-use-only CSS/JS bundles, SVG icon libraries, or secondary HTML content to load via XHR.
 
 ## Why?
 
@@ -234,7 +234,7 @@ Now the compiled Sass is available in your default bundle and will show up in `g
 
 Starting with `@11ty/eleventy-plugin-webc@0.9.0` ([coming soon](https://github.com/11ty/eleventy-plugin-webc/issues/48)) this plugin is used by default in the Eleventy WebC plugin. Specifically, [WebC Bundler Mode](https://www.11ty.dev/docs/languages/webc/#css-and-js-(bundler-mode)) now uses the bundle plugin under the hood.
 
-To add CSS to a page bundle in WebC, you would use a `<style>` element in a WebC page or component:
+To add CSS to a bundle in WebC, you would use a `<style>` element in a WebC page or component:
 
 ```html
 <style>/* This is bundled. */</style>
