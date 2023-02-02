@@ -1,3 +1,6 @@
+const bundlePlugin = require("../eleventy.config.js");
+
 module.exports = function(eleventyConfig) {
-	eleventyConfig.addPlugin(require("../eleventy.config.js"));
+	eleventyConfig.addPlugin(bundlePlugin);
+	eleventyConfig.addPlugin(bundlePlugin);
 };

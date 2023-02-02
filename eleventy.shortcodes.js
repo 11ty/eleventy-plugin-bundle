@@ -17,7 +17,7 @@ module.exports = function(eleventyConfig, options = {}) {
 			}
 
 			if(addShortcodeName) {
-				eleventyConfig.addPairedShortcode(addShortcodeName, function addContent(content, bucket, urlOverride) {		
+				eleventyConfig.addPairedShortcode(addShortcodeName, function addContent(content, bucket, urlOverride) {
 					let url = urlOverride || this.page.url;
 					managers[name].addToPage(url, content, bucket);
 					return "";

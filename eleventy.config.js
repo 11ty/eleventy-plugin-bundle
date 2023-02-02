@@ -1,6 +1,6 @@
 const pkg = require("./package.json");
 const shortcodesPlugin = require("./eleventy.shortcodes.js");
-// const debug = require("debug")("Eleventy:Bundle");
+const debug = require("debug")("Eleventy:Bundle");
 
 function normalizeOptions(options) {
 	let shortcodes = Object.assign({
@@ -23,7 +23,9 @@ function normalizeOptions(options) {
 	return options;
 }
 
-module.exports = function(eleventyConfig, options = {}) {
+let hasExecuted = false;
+
+function eleventyBundlePlugin(eleventyConfig, options = {}) {
 	try {
 		eleventyConfig.versionCheck(pkg["11ty"].compatibility);
 	} catch(e) {
@@ -32,5 +34,16 @@ module.exports = function(eleventyConfig, options = {}) {
 
 	options = normalizeOptions(options);
 
-	eleventyConfig.addPlugin(shortcodesPlugin, options);
+	eleventyConfig.on("eleventy.before", () => {
+		hasExecuted = false;
+	});
+
+	if(hasExecuted) {
+		debug("Warning: You can only addPlugin @11ty/eleventy-plugin-bundle once per project. Subsequent adds are ignored.");
+	} else {
+		hasExecuted = true;
+		shortcodesPlugin(eleventyConfig, options);
+	}
 };
+
+module.exports = eleventyBundlePlugin;

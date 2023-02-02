@@ -4,7 +4,7 @@
 	"description": "Little bundles of code, little bundles of joy.",
 	"main": "eleventy.config.js",
 	"scripts": {
-		"sample": "npx @11ty/eleventy --config=sample/sample-config.js --input=sample",
+		"sample": "DEBUG=Eleventy:Bundle npx @11ty/eleventy --config=sample/sample-config.js --input=sample",
 		"test": "npx ava"
 	},
 	"publishConfig": {
