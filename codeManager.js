@@ -19,7 +19,7 @@ class BundleFileOutput {
 		if(hashCache[content]) {
 			return hashCache[content];
 		}
-	
+
 		let hash = createHash("sha256");
 		hash.update(content);
 		let base64hash = hash.digest('base64').replace(/=/g, "").replace(/\+/g, "-").replace(/\//g, "_");
@@ -27,15 +27,15 @@ class BundleFileOutput {
 		hashCache[content] = filenameHash;
 		return filenameHash;
 	}
-	
+
 	getFilename(filename, extension) {
 		return filename + (extension && !extension.startsWith(".") ? `.${extension}` : "");
 	}
-	
+
 	modifyPathToUrl(dir, filename) {
 		return "/" + path.join(dir, filename).split(path.sep).join("/");
 	}
-	
+
 	writeBundle(content, type, writeToFileSystem) {
 		let dir = path.join(this.outputDirectory, this.bundleDirectory);
 		let filenameHash = this.getFilenameHash(content);
@@ -51,7 +51,7 @@ class BundleFileOutput {
 			debug("Writing bundle %o", fullPath);
 			fs.writeFileSync(fullPath, content);
 		}
-	
+
 		return this.modifyPathToUrl(this.bundleDirectory, filename);
 	}
 }
@@ -93,14 +93,14 @@ class CodeManager {
 			if(!this.pages[pageUrl][b]) {
 				this.pages[pageUrl][b] = new Set();
 			}
-	
+
 			let content = code.map(entry => {
 				if(this.trimOnAdd) {
 					return entry.trim();
 				}
 				return entry;
 			}).join("\n");
-	
+
 			debug("Adding %o to bundle %o for %o (bucket: %o)", content, this.name, pageUrl, b);
 			this.pages[pageUrl][b].add(content);
 		}
@@ -118,7 +118,8 @@ class CodeManager {
 		let set = new Set();
 		for(let b of buckets) {
 			if(!this.pages[pageUrl][b]) {
-				throw new Error("Could not find bucket " + b + " for url " + pageUrl);
+				// Just continue, if you retrieve code from a bucket that doesn’t exist or has no code, it will return an empty set
+				continue;
 			}
 
 			for(let entry of this.pages[pageUrl][b]) {
@@ -136,9 +137,9 @@ class CodeManager {
 		}
 
 		let { output, bundle, write } = options;
-	
+
 		buckets = CodeManager.normalizeBuckets(buckets);
-		
+
 		let content = this.getForPage(pageUrl, buckets);
 
 		let writer = new BundleFileOutput(output, bundle);

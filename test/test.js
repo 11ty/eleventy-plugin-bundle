@@ -108,7 +108,8 @@ test("CSS, two buckets, explicit `default`", async t => {
 	t.deepEqual(results[0].content, `<style>* { color: blue; }
 * { color: orange; }</style>
 <style>* { color: blue; }
-* { color: red; }</style>`)
+* { color: red; }</style>
+<style></style>`)
 });
 
 test("CSS, get two buckets at once", async t => {
