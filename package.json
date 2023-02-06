@@ -25,6 +25,12 @@
 		"eleventy",
 		"eleventy-plugin"
 	],
+	"repository": {
+		"type": "git",
+		"url": "git://github.com/11ty/eleventy-plugin-bundle.git"
+	},
+	"bugs": "https://github.com/11ty/eleventy-plugin-bundle/issues",
+	"homepage": "https://www.11ty.dev/",
 	"author": {
 		"name": "Zach Leatherman",
 		"email": "zachleatherman@gmail.com",
