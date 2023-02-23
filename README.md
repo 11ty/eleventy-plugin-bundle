@@ -250,9 +250,9 @@ To add JS to a page bundle in WebC, you would use a `<script>` element in a WebC
 <script webc:keep>/* Do not bundle me—leave as is */</script>
 ```
 
-* Existing calls via WebC helpers `getCss` or `getJs` (e.g. `<style @raw="getCss(page.url)">`) have been wired up to `getBundle('css')` and `getBundle('js')` automatically.
+* Existing calls via WebC helpers `getCss` or `getJs` (e.g. `<style @raw="getCss(page.url)">`) have been wired up to `getBundle` (for `"css"` and `"js"` respectively) automatically.
 	* For consistency, you may prefer using the bundle plugin method names everywhere: `<style @raw="getBundle('css')">` and `<script @raw="getBundle('js')">` both work fine.
-* Outside of WebC, the [Universal Filters `webcGetCss` and `webcGetJs`](https://www.11ty.dev/docs/languages/webc/#css-and-js-(bundler-mode)) were available to access CSS and JS bundles but are considered deprecated in favor of new bundle plugin Universal Shortcodes `getBundle("css")` and `getBundle("js")` respectively.
+* Outside of WebC, the [Universal Filters `webcGetCss` and `webcGetJs`](https://www.11ty.dev/docs/languages/webc/#css-and-js-(bundler-mode)) were available to access CSS and JS bundles but are considered deprecated in favor of the new bundle plugin Universal Shortcode `{% getBundle "css" %}` and `{% getBundle "js" %}` respectively.
 
 #### Modify the bundle output
 
