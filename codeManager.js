@@ -5,9 +5,6 @@ class CodeManager {
 	// code is placed in this bucket by default
 	static DEFAULT_BUCKET_NAME = "default";
 
-	// when multiple buckets have the same code, they get de-duped/moved to this bucket
-	static ESCALATED_BUCKET_NAME = "default";
-
 	constructor(name) {
 		this.name = name;
 		this.trimOnAdd = true;
