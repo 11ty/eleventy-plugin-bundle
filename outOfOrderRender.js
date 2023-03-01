@@ -1,3 +1,5 @@
+const debug = require("debug")("Eleventy:Bundle");
+
 /* This class defers any `bundleGet` calls to a post-build transform step,
  * to allow `getBundle` to be called before all of the `css` additions have been processed
  */
@@ -53,8 +55,20 @@ class OutOfOrderRender {
 		this.writeToFileSystem = isWrite;
 	}
 
+	getAllBucketsForPage(pageData) {
+		let availableBucketsForPage = new Set();
+		for(let name in this.managers) {
+			for(let bucket of this.managers[name].getBucketsForPage(pageData)) {
+				availableBucketsForPage.add(`${name}::${bucket}`);
+			}
+		}
+		return availableBucketsForPage;
+	}
+
 	async replaceAll(pageData) {
 		let matches = this.findAll();
+		let availableBucketsForPage = this.getAllBucketsForPage(pageData);
+		let usedBucketsOnPage = new Set();
 
 		let content = await Promise.all(matches.map(match => {
 			if(typeof match === "string") {
@@ -65,6 +79,9 @@ class OutOfOrderRender {
 			if(!this.managers[name]) {
 				throw new Error(`No asset manager found for ${name}. Known keys: ${Object.keys(this.managers)}`);
 			}
+
+			usedBucketsOnPage.add(`${name}::${bucket}`);
+
 			if(type === "get") {
 				// returns promise
 				return this.managers[name].getForPage(pageData, bucket);
@@ -78,6 +95,13 @@ class OutOfOrderRender {
 			}
 			return "";
 		}));
+
+		for(let bucketInfo of availableBucketsForPage) {
+			if(!usedBucketsOnPage.has(bucketInfo)) {
+				let [type, bucketName] = bucketInfo.split("::");
+				debug(`WARNING! \`${pageData.inputPath}\` has unbundled \`${type}\` assets (in the '${bucketName}' bucket) that were not written to or used on the page. You might want to add a call to \`getBundle('${type}', '${bucketName}')\` to your content! Learn more: https://github.com/11ty/eleventy-plugin-bundle#asset-bucketing`)
+			}
+		}
 
 		return content.join("");
 	}

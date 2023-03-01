@@ -87,6 +87,14 @@ class CodeManager {
 		return str;
 	}
 
+	getBucketsForPage(pageData) {
+		let pageUrl = pageData.url;
+		if(!this.pages[pageUrl]) {
+			return [];
+		}
+		return Object.keys(this.pages[pageUrl]);
+	}
+
 	async getForPage(pageData, buckets) {
 		let url = pageData.url;
 		if(!this.pages[url]) {
