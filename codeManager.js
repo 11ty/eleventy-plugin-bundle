@@ -2,6 +2,12 @@ const BundleFileOutput = require("./BundleFileOutput");
 const debug = require("debug")("Eleventy:Bundle");
 
 class CodeManager {
+	// code is placed in this bucket by default
+	static DEFAULT_BUCKET_NAME = "default";
+
+	// when multiple buckets have the same code, they get de-duped/moved to this bucket
+	static ESCALATED_BUCKET_NAME = "default";
+
 	constructor(name) {
 		this.name = name;
 		this.trimOnAdd = true;
@@ -19,7 +25,7 @@ class CodeManager {
 		} else if(typeof bucket === "string") {
 			return bucket.split(",");
 		}
-		return ["default"];
+		return [CodeManager.DEFAULT_BUCKET_NAME];
 	}
 
 	setTransforms(transforms) {
@@ -28,6 +34,12 @@ class CodeManager {
 		}
 
 		this.transforms = transforms;
+	}
+
+	_initBucket(pageUrl, bucket) {
+		if(!this.pages[pageUrl][bucket]) {
+			this.pages[pageUrl][bucket] = new Set();
+		}
 	}
 
 	addToPage(pageUrl, code = [], bucket) {
@@ -43,20 +55,22 @@ class CodeManager {
 		}
 
 		let buckets = CodeManager.normalizeBuckets(bucket);
-		for(let b of buckets) {
-			if(!this.pages[pageUrl][b]) {
-				this.pages[pageUrl][b] = new Set();
+
+		let codeContent = code.map(entry => {
+			if(this.trimOnAdd) {
+				return entry.trim();
 			}
+			return entry;
+		});
 
-			let content = code.map(entry => {
-				if(this.trimOnAdd) {
-					return entry.trim();
-				}
-				return entry;
-			}).join("\n");
 
-			debug("Adding %o to bundle %o for %o (bucket: %o)", content, this.name, pageUrl, b);
-			this.pages[pageUrl][b].add(content);
+		for(let b of buckets) {
+			this._initBucket(pageUrl, b);
+
+			debug("Adding %O to bundle %o for %o (bucket: %o)", codeContent, this.name, pageUrl, b);
+			for(let content of codeContent) {
+				this.pages[pageUrl][b].add(content);
+			}
 		}
 	}
 

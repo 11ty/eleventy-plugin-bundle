@@ -3,6 +3,8 @@ const OutOfOrderRender = require("./outOfOrderRender.js");
 const debug = require("debug")("Eleventy:Bundle");
 
 module.exports = function(eleventyConfig, options = {}) {
+	// TODO throw an error if addPlugin is called more than once per build here.
+
 	let managers = {};
 
 	options.bundles.forEach(name => {
