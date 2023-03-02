@@ -4,6 +4,7 @@ const { createHash } = require("crypto");
 
 const hashCache = {};
 const directoryExistsCache = {};
+const writingCache = new Set();
 
 const debug = require("debug")("Eleventy:Bundle");
 
@@ -46,14 +47,20 @@ class BundleFileOutput {
 		let filename = this.getFilename(filenameHash, type);
 
 		if(writeToFileSystem) {
-			if(!directoryExistsCache[dir]) {
-				fs.mkdirSync(dir, { recursive: true });
-				directoryExistsCache[dir] = true;
-			}
-
 			let fullPath = path.join(dir, filename);
-			debug("Writing bundle %o", fullPath);
-			fs.writeFileSync(fullPath, content);
+
+			// no duplicate writes, this may be improved with a fs exists check, but it would only save the first write
+			if(!writingCache.has(fullPath)) {
+				writingCache.add(fullPath);
+
+				if(!directoryExistsCache[dir]) {
+					fs.mkdirSync(dir, { recursive: true });
+					directoryExistsCache[dir] = true;
+				}
+
+				debug("Writing bundle %o", fullPath);
+				fs.writeFileSync(fullPath, content);
+			}
 		}
 
 		return this.modifyPathToUrl(this.bundleDirectory, filename);
