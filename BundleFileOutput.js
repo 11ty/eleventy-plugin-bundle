@@ -36,6 +36,11 @@ class BundleFileOutput {
 	}
 
 	writeBundle(content, type, writeToFileSystem) {
+		// do not write a bundle, do not return a file name is content is empty
+		if(!content) {
+			return;
+		}
+
 		let dir = path.join(this.outputDirectory, this.bundleDirectory);
 		let filenameHash = this.getFilenameHash(content);
 		let filename = this.getFilename(filenameHash, type);
