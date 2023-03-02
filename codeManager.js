@@ -5,11 +5,19 @@ class CodeManager {
 	// code is placed in this bucket by default
 	static DEFAULT_BUCKET_NAME = "default";
 
+	// code is hoisted to this bucket when necessary
+	static HOISTED_BUCKET_NAME = "default";
+
 	constructor(name) {
 		this.name = name;
 		this.trimOnAdd = true;
 		this.reset();
 		this.transforms = [];
+		this.isHoisting = true;
+	}
+
+	setHoisting(enabled) {
+		this.isHoisting = !!enabled;
 	}
 
 	reset() {
@@ -64,7 +72,7 @@ class CodeManager {
 		for(let b of buckets) {
 			this._initBucket(pageUrl, b);
 
-			debug("Adding %O to bundle %o for %o (bucket: %o)", codeContent, this.name, pageUrl, b);
+			debug("Adding code to bundle %o for %o (bucket: %o): %o", this.name, pageUrl, b, codeContent);
 			for(let content of codeContent) {
 				this.pages[pageUrl][b].add(content);
 			}
@@ -133,9 +141,34 @@ class CodeManager {
 
 		// TODO the bundle output URL might be useful in the transforms for sourcemaps
 		let content = await this.getForPage(pageData, buckets);
-
 		let writer = new BundleFileOutput(output, bundle);
 		return writer.writeBundle(content, this.name, write);
+	}
+
+	// Used when a bucket is output multiple times on a page and needs to be hoisted
+	hoistBucket(pageData, bucketName) {
+		let newTargetBucketName = CodeManager.HOISTED_BUCKET_NAME;
+		if(!this.isHoisting || bucketName === newTargetBucketName) {
+			return;
+		}
+
+		let url = pageData.url;
+		if(!this.pages[url] || !this.pages[url][bucketName]) {
+			debug("No bundle code found for %o on %o, %O", this.name, url, this.pages);
+			return;
+		}
+
+		debug("Code in bucket (%o) is being hoisted to a new bucket (%o)", bucketName, newTargetBucketName);
+
+		this._initBucket(url, newTargetBucketName);
+
+		for(let codeEntry of this.pages[url][bucketName]) {
+			this.pages[url][bucketName].delete(codeEntry);
+			this.pages[url][newTargetBucketName].add(codeEntry);
+		}
+
+		// delete the bucket
+		delete this.pages[url][bucketName];
 	}
 }
 

@@ -261,3 +261,64 @@ test("Use Transforms", async t => {
 * { color: red; }
 #id * { color: orange; }</style>`);
 });
+
+test("Output `defer` bucket multiple times (hoisting disabled)", async t => {
+	let elev = new Eleventy("test/stubs/output-same-bucket-multiple-times-nohoist/", undefined, {
+		configPath: "eleventy.bundle.js"
+	});
+
+	let results = await elev.toJSON();
+	t.deepEqual(normalize(results[0].content), `<style>* { color: blue; }</style>
+<style>* { color: blue; }
+* { color: red; }</style>
+<style>* { color: blue; }
+* { color: red; }</style>`);
+});
+
+test("Output `defer` bucket multiple times (does hoisting)", async t => {
+	let elev = new Eleventy("test/stubs/output-same-bucket-multiple-times/", undefined, {
+		configPath: "test/stubs/output-same-bucket-multiple-times/eleventy.config.js"
+	});
+
+	let results = await elev.toJSON();
+	t.deepEqual(normalize(results[0].content), `<style>* { color: blue; }
+* { color: red; }</style>
+<style></style>
+<style></style>`);
+});
+
+test("Output `default` bucket multiple times (no hoisting)", async t => {
+	let elev = new Eleventy("test/stubs/output-default-multiple-times/", undefined, {
+		configPath: "test/stubs/output-default-multiple-times/eleventy.config.js"
+	});
+
+	let results = await elev.toJSON();
+	t.deepEqual(normalize(results[0].content), `<style>* { color: blue; }</style>
+<style>* { color: blue; }</style>`);
+});
+
+test("`defer` hoisting", async t => {
+	let elev = new Eleventy("test/stubs/to-file-duplicates/", undefined, {
+		configPath: "test/stubs/to-file-duplicates/eleventy.config.js"
+	});
+
+	let results = await elev.toJSON();
+	results.sort((a, b) => {
+		if(a.inputPath > b.inputPath) {
+			return 1;
+		}
+		return -1;
+	})
+
+	t.deepEqual(normalize(results[0].content), `<style></style>
+<link rel="stylesheet" href="/bundle/S_XQgJiZBL.css">
+<link rel="stylesheet" href="/bundle/S_XQgJiZBL.css">`);
+
+	t.deepEqual(normalize(results[1].content), `<style>* { color: blue; }</style>
+<style></style>
+<link rel="stylesheet" href="">`);
+
+	t.deepEqual(normalize(results[2].content), `<style>* { color: blue; }</style>
+<style></style>
+<style></style>`);
+});

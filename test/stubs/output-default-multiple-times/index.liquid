@@ -1,0 +1,4 @@
+{%- css "default" %}* { color: blue; }{% endcss %}
+{%- comment %}nothing is hoisted if you output default multiple times{% endcomment %}
+<style>{% getBundle "css", "default" %}</style>
+<style>{% getBundle "css", "default" %}</style>

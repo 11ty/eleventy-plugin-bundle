@@ -9,6 +9,13 @@ module.exports = function(eleventyConfig, options = {}) {
 
 	options.bundles.forEach(name => {
 		managers[name] = new CodeManager(name);
+
+		if(Array.isArray(options.hoistDuplicateBundlesFor) && options.hoistDuplicateBundlesFor.includes(name)) {
+			managers[name].setHoisting(true);
+		} else {
+			managers[name].setHoisting(false);
+		}
+
 		managers[name].setTransforms(options.transforms);
 
 		// e.g. `css` shortcode to add code to page bundle

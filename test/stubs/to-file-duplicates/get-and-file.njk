@@ -1,0 +1,4 @@
+{%- css "defer" %}* { color: blue; }{% endcss %}
+<style>{% getBundle "css" %}</style>
+<style>{% getBundle "css", "defer" %}</style>
+<link rel="stylesheet" href="{% getBundleFileUrl "css", "defer" %}">

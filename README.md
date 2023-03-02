@@ -45,15 +45,20 @@ module.exports = function(eleventyConfig) {
 		// Folder (in the output directory) bundle files will write to:
 		toFileDirectory: "bundle",
 
-		// Default bundle types
-		bundles: ["css", "js", "html"],
+		// Extra bundle names ("css", "js", "html" are guaranteed)
+		bundles: [],
 
 		// Array of async-friendly callbacks to transform bundle content.
 		// Works with getBundle and getBundleFileUrl
-		transforms: []
+		transforms: [],
+
+		// Array of bundle names eligible for duplicate bundle hoisting
+		hoistDuplicateBundlesFor: [],
 	});
 };
 ```
+
+Read more about [`hoistDuplicateBundlesFor` and duplicate bundle hoisting](https://github.com/11ty/eleventy-plugin-bundle/issues/5).
 
 </details>
 

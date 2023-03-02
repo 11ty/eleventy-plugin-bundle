@@ -1,0 +1,7 @@
+{%- css "default" %}* { color: blue; }{% endcss %}
+{%- css "defer" %}* { color: blue; }{% endcss %}
+{%- css "defer" %}* { color: red; }{% endcss %}
+<style>{% getBundle "css", "default" %}</style>
+{%- comment %}bucket is hoisted to default if you output it multiple times{% endcomment %}
+<style>{% getBundle "css", "defer" %}</style>
+<style>{% getBundle "css", "defer" %}</style>

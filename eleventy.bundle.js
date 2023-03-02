@@ -7,7 +7,8 @@ function normalizeOptions(options = {}) {
 		bundles: [], // extra bundles: css, js, and html are guaranteed
 		toFileDirectory: "bundle",
 		// post-process
-		transforms: []
+		transforms: [],
+		hoistDuplicateBundlesFor: [],
 	}, options);
 
 	options.bundles = Array.from(new Set(["css", "js", "html", ...(options.bundles || [])]));

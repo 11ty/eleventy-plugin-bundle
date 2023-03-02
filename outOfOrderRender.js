@@ -12,6 +12,7 @@ class OutOfOrderRender {
 		this.managers = {};
 	}
 
+	// type if `get` (return string) or `file` (bundle writes to file, returns file url)
 	static getAssetKey(type, name, bucket) {
 		if(Array.isArray(bucket)) {
 			bucket = bucket.join(",");
@@ -65,10 +66,54 @@ class OutOfOrderRender {
 		return availableBucketsForPage;
 	}
 
+	getManager(name) {
+		if(!this.managers[name]) {
+			throw new Error(`No asset manager found for ${name}. Known names: ${Object.keys(this.managers)}`);
+		}
+		return this.managers[name];
+	}
+
 	async replaceAll(pageData) {
 		let matches = this.findAll();
 		let availableBucketsForPage = this.getAllBucketsForPage(pageData);
 		let usedBucketsOnPage = new Set();
+		let bucketsOutputStringCount = {};
+		let bucketsFileCount = {};
+
+		for(let match of matches) {
+			if(typeof match === "string") {
+				continue;
+			}
+
+			// type is `file` or `get`
+			let {type, name, bucket} = match;
+			let key = `${name}::${bucket}`;
+			if(!usedBucketsOnPage.has(key)) {
+				usedBucketsOnPage.add(key);
+			}
+
+			if(type === "get") {
+				if(!bucketsOutputStringCount[key]) {
+					bucketsOutputStringCount[key] = 0;
+				}
+				bucketsOutputStringCount[key]++;
+			} else if(type === "file") {
+				if(!bucketsFileCount[key]) {
+					bucketsFileCount[key] = 0;
+				}
+				bucketsFileCount[key]++;
+			}
+		}
+
+		// Hoist code in non-default buckets that are output multiple times
+		// Only hoist if 2+ `get` OR 1 `get` and 1+ `file`
+		for(let bucketInfo in bucketsOutputStringCount) {
+			let stringOutputCount = bucketsOutputStringCount[bucketInfo];
+			if(stringOutputCount > 1 || stringOutputCount === 1 && bucketsFileCount[bucketInfo] > 0) {
+				let [name, bucketName] = bucketInfo.split("::");
+				this.getManager(name).hoistBucket(pageData, bucketName);
+			}
+		}
 
 		let content = await Promise.all(matches.map(match => {
 			if(typeof match === "string") {
@@ -76,18 +121,14 @@ class OutOfOrderRender {
 			}
 
 			let {type, name, bucket} = match;
-			if(!this.managers[name]) {
-				throw new Error(`No asset manager found for ${name}. Known keys: ${Object.keys(this.managers)}`);
-			}
-
-			usedBucketsOnPage.add(`${name}::${bucket}`);
+			let manager = this.getManager(name);
 
 			if(type === "get") {
 				// returns promise
-				return this.managers[name].getForPage(pageData, bucket);
+				return manager.getForPage(pageData, bucket);
 			} else if(type === "file") {
 				// returns promise
-				return this.managers[name].writeBundle(pageData, bucket, {
+				return manager.writeBundle(pageData, bucket, {
 					output: this.outputDirectory,
 					bundle: this.bundleDirectory,
 					write: this.writeToFileSystem,
@@ -98,8 +139,8 @@ class OutOfOrderRender {
 
 		for(let bucketInfo of availableBucketsForPage) {
 			if(!usedBucketsOnPage.has(bucketInfo)) {
-				let [type, bucketName] = bucketInfo.split("::");
-				debug(`WARNING! \`${pageData.inputPath}\` has unbundled \`${type}\` assets (in the '${bucketName}' bucket) that were not written to or used on the page. You might want to add a call to \`getBundle('${type}', '${bucketName}')\` to your content! Learn more: https://github.com/11ty/eleventy-plugin-bundle#asset-bucketing`)
+				let [name, bucketName] = bucketInfo.split("::");
+				debug(`WARNING! \`${pageData.inputPath}\` has unbundled \`${name}\` assets (in the '${bucketName}' bucket) that were not written to or used on the page. You might want to add a call to \`getBundle('${name}', '${bucketName}')\` to your content! Learn more: https://github.com/11ty/eleventy-plugin-bundle#asset-bucketing`);
 			}
 		}
 
