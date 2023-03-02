@@ -53,7 +53,7 @@ module.exports = function(eleventyConfig) {
 		transforms: [],
 
 		// Array of bundle names eligible for duplicate bundle hoisting
-		hoistDuplicateBundlesFor: [],
+		hoistDuplicateBundlesFor: [], // e.g. ["css", "js"]
 	});
 };
 ```
