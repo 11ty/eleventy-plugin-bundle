@@ -79,12 +79,13 @@ class CodeManager {
 		}
 	}
 
-	async runTransforms(str, pageData) {
+	async runTransforms(str, pageData, buckets) {
 		for (let callback of this.transforms) {
 			str = await callback.call(
 				{
 					page: pageData,
-					type: this.name
+					type: this.name,
+					buckets: buckets
 				},
 				str
 			);
