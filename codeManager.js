@@ -79,11 +79,13 @@ class CodeManager {
 		}
 	}
 
-	async runTransforms(str, pageData) {
+	async runTransforms(str, pageData, buckets) {
 		for (let callback of this.transforms) {
 			str = await callback.call(
 				{
-					page: pageData
+					page: pageData,
+					type: this.name,
+					buckets: buckets
 				},
 				str
 			);
@@ -125,7 +127,7 @@ class CodeManager {
 		let bundleContent = Array.from(set).join("\n");
 
 		// returns promise
-		return this.runTransforms(bundleContent, pageData);
+		return this.runTransforms(bundleContent, pageData, buckets);
 	}
 
 	async writeBundle(pageData, buckets, options = {}) {

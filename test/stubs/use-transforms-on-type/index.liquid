@@ -1,0 +1,9 @@
+<style>{% getBundle "css" %}</style>
+<script>{% getBundle "js" %}</script>
+
+{%- css %}* { color: blue; }{% endcss %}
+{%- css %}* { color: blue; }{% endcss %}
+{%- css %}* { color: red; }{% endcss %}
+{%- css %}#id { * { color: orange; } }{% endcss %}
+
+{%- js %}console.log("bundle me up"){% endjs %}
