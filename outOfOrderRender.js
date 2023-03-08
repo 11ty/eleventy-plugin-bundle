@@ -106,7 +106,7 @@ class OutOfOrderRender {
 		}
 
 		// Hoist code in non-default buckets that are output multiple times
-		// Only hoist if 2+ `get` OR 1 `get` and 1+ `file`
+		// Only hoist if 2+ `get` OR 1+ `get` and 1+ `file`
 		for(let bucketInfo in bucketsOutputStringCount) {
 			let stringOutputCount = bucketsOutputStringCount[bucketInfo];
 			if(stringOutputCount > 1 || stringOutputCount === 1 && bucketsFileCount[bucketInfo] > 0) {
