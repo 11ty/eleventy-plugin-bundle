@@ -262,6 +262,17 @@ test("Use Transforms", async t => {
 #id * { color: orange; }</style>`);
 });
 
+test("Use Transforms on specific bundle type", async t => {
+	let elev = new Eleventy("test/stubs/use-transforms-on-type/", undefined, {
+		configPath: "test/stubs/use-transforms-on-type/eleventy.config.js"
+	});
+	let results = await elev.toJSON();
+	t.deepEqual(normalize(results[0].content), `<style>* { color: blue; }
+* { color: red; }
+#id * { color: orange; }</style>
+<script>console.log("bundle me up")</script>`);
+});
+
 test("Output `defer` bucket multiple times (hoisting disabled)", async t => {
 	let elev = new Eleventy("test/stubs/output-same-bucket-multiple-times-nohoist/", undefined, {
 		configPath: "eleventy.bundle.js"
