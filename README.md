@@ -122,7 +122,7 @@ Writes the bundle content to a content-hashed file location in your output direc
 <link rel="stylesheet" href="{% getBundleFileUrl "css" %}">
 ```
 
-Note that writing bundles to files are better cached in the browser for repeat-views but are likely slower for empty-cache first time visitors.
+Note that writing bundles to files will likely be slower for empty-cache first time visitors but better cached in the browser for repeat-views (and across multiple pages, too).
 
 ### Asset bucketing
 
