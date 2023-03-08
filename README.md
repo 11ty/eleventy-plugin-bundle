@@ -274,9 +274,14 @@ module.exports = function(eleventyConfig) {
 	eleventyConfig.addPlugin(bundlerPlugin, {
 		transforms: [
 			async function(content) {
-				// Same as Eleventy transforms, this.page is available here.
-				let result = await postcss([postcssNested]).process(content, { from: this.page.inputPath, to: null });
-				return result.css;
+				// this.type returns the bundle name.
+				if (this.type === 'css') {
+					// Same as Eleventy transforms, this.page is available here.
+					let result = await postcss([postcssNested]).process(content, { from: this.page.inputPath, to: null });
+					return result.css;
+				}
+
+				return content;
 			}
 		]
 	});
