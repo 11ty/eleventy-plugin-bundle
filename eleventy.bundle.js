@@ -28,7 +28,7 @@ function eleventyBundlePlugin(eleventyConfig, options = {}) {
 	shortcodesPlugin(eleventyConfig, options);
 };
 
-// This plugin is used to find the package name for this plugin (used by eleventy-plugin-webc)
+// This is used to find the package name for this plugin (used in eleventy-plugin-webc to prevent dupes)
 Object.defineProperty(eleventyBundlePlugin, "eleventyPackage", {
 	value: pkg.name
 });
