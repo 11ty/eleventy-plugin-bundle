@@ -61,7 +61,7 @@ module.exports = function(eleventyConfig, options = {}) {
 	});
 
 	eleventyConfig.addTransform("@11ty/eleventy-bundle", async function(content) {
-		if(!this.page.outputPath || typeof content !== "string") {
+		if(typeof content !== "string") {
 			return content;
 		}
 
