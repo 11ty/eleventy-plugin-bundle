@@ -61,7 +61,10 @@ module.exports = function(eleventyConfig, options = {}) {
 	});
 
 	eleventyConfig.addTransform("@11ty/eleventy-bundle", async function(content) {
-		if(!this.page.outputPath || typeof content !== "string") {
+		// `page.outputPath` is required to perform bundle transform, unless
+		// we're running in an Eleventy Serverless context.
+		let missingOutputPath = !this.page.outputPath && process.env.ELEVENTY_SERVERLESS !== "true";
+		if(missingOutputPath || typeof content !== "string") {
 			return content;
 		}
 
