@@ -1,6 +1,7 @@
 const test = require("ava");
 const fs = require("fs");
 const Eleventy = require("@11ty/eleventy");
+const { EleventyServerless } = require("@11ty/eleventy");
 const { EleventyRenderPlugin } = Eleventy;
 
 function normalize(str) {
@@ -332,4 +333,16 @@ test("`defer` hoisting", async t => {
 	t.deepEqual(normalize(results[2].content), `<style>* { color: blue; }</style>
 <style></style>
 <style></style>`);
+});
+
+test("Ignore missing `file.outputPath` when running under Serverless", async t => {
+	let elev = new EleventyServerless("test1", {
+		path: "/",
+		query: {},
+		inputDir: "./test/stubs/serverless-stubs/",
+		functionsDir: "./test/stubs/serverless-stubs/functions/",
+	});
+
+	let results = await elev.getOutput();
+	t.deepEqual(normalize(results[0].content), `<style>* { color: blue; }</style>`);
 });
