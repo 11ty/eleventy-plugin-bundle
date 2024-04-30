@@ -8,16 +8,20 @@ module.exports = function(eleventyConfig) {
 	});
 
 	// adds html, css, js (maintain existing API)
-	eleventyConfig.addPlugin(bundlePlugin);
+	eleventyConfig.addPlugin(bundlePlugin, {
+		toFileDirectory: "bundle1"
+	});
 
-	// ignored, already exists
-	eleventyConfig.addBundle("css");
-	// ignored, already exists
-	eleventyConfig.addBundle("css");
-	// ignored, already exists
-	eleventyConfig.addBundle("css");
-	// ignored, already exists
-	eleventyConfig.addBundle("html");
+	eleventyConfig.addPlugin(eleventyConfig => {
+		// ignored, already exists
+		eleventyConfig.addBundle("css");
+		// ignored, already exists
+		eleventyConfig.addBundle("css");
+		// ignored, already exists
+		eleventyConfig.addBundle("css");
+		// ignored, already exists
+		eleventyConfig.addBundle("html");
+	});
 
 	// new!
 	eleventyConfig.addBundle("stylesheet", {

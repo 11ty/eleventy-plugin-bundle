@@ -17,6 +17,7 @@ class CodeManager {
 		this.transforms = [];
 		this.isHoisting = true;
 		this.fileExtension = undefined;
+		this.toFileDirectory = undefined;
 	}
 
 	setFileExtension(ext) {
@@ -25,6 +26,10 @@ class CodeManager {
 
 	setHoisting(enabled) {
 		this.isHoisting = !!enabled;
+	}
+
+	setBundleDirectory(dir) {
+		this.toFileDirectory = dir;
 	}
 
 	reset() {
@@ -145,13 +150,13 @@ class CodeManager {
 			return "";
 		}
 
-		let { output, bundle, write } = options;
+		let { output, write } = options;
 
 		buckets = CodeManager.normalizeBuckets(buckets);
 
 		// TODO the bundle output URL might be useful in the transforms for sourcemaps
 		let content = await this.getForPage(pageData, buckets);
-		let writer = new BundleFileOutput(output, bundle);
+		let writer = new BundleFileOutput(output, this.toFileDirectory);
 		writer.setFileExtension(this.fileExtension);
 		return writer.writeBundle(content, this.name, write);
 	}

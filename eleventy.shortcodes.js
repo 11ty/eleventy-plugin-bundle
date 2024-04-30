@@ -69,8 +69,7 @@ module.exports = function(eleventyConfig, pluginOptions = {}) {
 			render.setAssetManager(key, managers[key]);
 		}
 
-		render.setOutputDirectory(eleventyConfig.dir.output);
-		render.setBundleDirectory(pluginOptions.toFileDirectory);
+		render.setOutputDirectory(eleventyConfig.directories.output);
 		render.setWriteToFileSystem(writeToFileSystem);
 
 		return render.replaceAll(this.page);

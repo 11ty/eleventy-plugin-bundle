@@ -26,6 +26,10 @@ module.exports = function(eleventyConfig, pluginOptions = {}) {
 				managers[name].setFileExtension(bundleOptions.outputFileExtension);
 			}
 
+			if(bundleOptions.toFileDirectory) {
+				managers[name].setBundleDirectory(bundleOptions.toFileDirectory);
+			}
+
 			if(bundleOptions.transforms) {
 				managers[name].setTransforms(bundleOptions.transforms);
 			}

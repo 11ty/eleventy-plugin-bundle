@@ -31,10 +31,6 @@ class OutOfOrderRender {
 		this.outputDirectory = dir;
 	}
 
-	setBundleDirectory(dir) {
-		this.bundleDirectory = dir;
-	}
-
 	normalizeMatch(match) {
 		if(match.startsWith("/*__EleventyBundle:")) {
 			let [prefix, type, name, bucket, suffix] = match.split(OutOfOrderRender.SEPARATOR);
@@ -130,7 +126,6 @@ class OutOfOrderRender {
 				// returns promise
 				return manager.writeBundle(pageData, bucket, {
 					output: this.outputDirectory,
-					bundle: this.bundleDirectory,
 					write: this.writeToFileSystem,
 				});
 			}

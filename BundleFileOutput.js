@@ -11,7 +11,7 @@ const debug = require("debug")("Eleventy:Bundle");
 class BundleFileOutput {
 	constructor(outputDirectory, bundleDirectory) {
 		this.outputDirectory = outputDirectory;
-		this.bundleDirectory = bundleDirectory;
+		this.bundleDirectory = bundleDirectory || "";
 		this.hashLength = 10;
 		this.fileExtension = undefined;
 	}

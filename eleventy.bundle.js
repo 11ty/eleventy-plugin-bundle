@@ -41,6 +41,7 @@ function eleventyBundlePlugin(eleventyConfig, pluginOptions = {}) {
 				outputFileExtension: name, // default as `name`
 				shortcodeName: name, // `false` will skip shortcode
 				transforms: pluginOptions.transforms,
+				toFileDirectory: pluginOptions.toFileDirectory,
 			});
 		});
 	}
