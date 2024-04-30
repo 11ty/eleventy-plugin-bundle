@@ -36,7 +36,7 @@ This does two things:
 1. Creates a new `css` shortcode for adding arbitrary code to this bundle
 2. Adds `"css"` as an eligible type argument to the `getBundle` and `getBundleFileUrl` shortcodes.
 
-### More options
+### Full options list
 
 ```js
 module.exports = function(eleventyConfig) {
