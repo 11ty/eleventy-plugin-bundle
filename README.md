@@ -16,7 +16,7 @@ But do note that a full-featured bundler has a significant build performance cos
 
 ## Installation
 
-No installation necessary. This plugin is now bundled directly with Eleventy core.
+No installation necessary. Starting with Eleventy `v3.0.0-alpha.10` and newer, this plugin is now bundled with Eleventy.
 
 ## Usage
 
