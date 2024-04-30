@@ -71,7 +71,7 @@ The following Universal Shortcodes (available in `njk`, `liquid`, `hbs`, `11ty.j
 
 Here’s a [real-world commit showing this in use on the `eleventy-base-blog` project](https://github.com/11ty/eleventy-base-blog/commit/c9595d8f42752fa72c66991c71f281ea960840c9?diff=split).
 
-### Add bundle code in a Markdown file in Eleventy
+### Example: Add bundle code in a Markdown file in Eleventy
 
 ```md
 # My Blog Post
@@ -100,6 +100,8 @@ Renders to:
 ```
 
 Note that the bundled code is excluded!
+
+_There are a few [more examples below](#examples)!_
 
 ### Render bundle code
 
