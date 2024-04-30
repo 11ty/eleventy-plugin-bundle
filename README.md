@@ -16,58 +16,59 @@ But do note that a full-featured bundler has a significant build performance cos
 
 ## Installation
 
-It’s available on [npm as `@11ty/eleventy-plugin-bundle`](https://www.npmjs.com/package/@11ty/eleventy-plugin-bundle):
+No installation necessary. This plugin is now bundled directly with Eleventy core.
 
-```
-npm install @11ty/eleventy-plugin-bundle
-```
+## Usage
 
-And then in your Eleventy configuration file (probably `.eleventy.js`):
+By default, Bundle Plugin v2.0 does not include any default bundles. You must add these yourself via `eleventyConfig.addBundle`. One notable exception happens when using the WebC Eleventy Plugin, which adds `css`, `js`, and `html` bundles for you.
+
+To create a bundle type, use `eleventyConfig.addBundle` in your Eleventy configuration file (default `.eleventy.js`):
 
 ```js
-const bundlerPlugin = require("@11ty/eleventy-plugin-bundle");
-
+// .eleventy.js
 module.exports = function(eleventyConfig) {
-	eleventyConfig.addPlugin(bundlerPlugin);
+	eleventyConfig.addBundle("css");
 };
 ```
 
-<details>
-<summary><strong>Full options list</strong></summary>
+This does two things:
 
-And then in your Eleventy configuration file (probably `.eleventy.js`):
+1. creates a new `css` shortcode for adding arbitrary code to this bundle
+2. adds `"css"` as an eligible type argument to `getBundle` and `getBundleFileUrl`
+
+<details>
+<summary>Expand to see all bundle options</summary>
 
 ```js
-const bundlerPlugin = require("@11ty/eleventy-plugin-bundle");
-
 module.exports = function(eleventyConfig) {
-	eleventyConfig.addPlugin(bundlerPlugin, {
-		// Folder (in the output directory) bundle files will write to:
+	eleventyConfig.addBundle("css", {
+		// Optional, folder (relative to output directory) files will write to:
 		toFileDirectory: "bundle",
 
-		// Extra bundle names ("css", "js", "html" are guaranteed)
-		bundles: [],
+		// Optional, defaults to bundle name
+		outputFileExtension: "css",
 
-		// Array of async-friendly callbacks to transform bundle content.
-		// Works with getBundle and getBundleFileUrl
+		// Optional, defaults to bundle name
+		shortcodeName: "css",
+		// shortcodeName: false, // don’t add a shortcode.
+
+		// Optional, modify bundle content
 		transforms: [],
 
-		// Array of bundle names eligible for duplicate bundle hoisting
-		hoistDuplicateBundlesFor: [], // e.g. ["css", "js"]
+		// Optional (advanced): if two identical code blocks exist in non-default buckets, they’ll be hoisted to the first bucket in common.
+		hoist: true,
 	});
 };
 ```
 
-Read more about [`hoistDuplicateBundlesFor` and duplicate bundle hoisting](https://github.com/11ty/eleventy-plugin-bundle/issues/5).
+Read more about [`hoist` and duplicate bundle hoisting](https://github.com/11ty/eleventy-plugin-bundle/issues/5).
 
 </details>
 
-## Usage
-
 The following Universal Shortcodes (available in `njk`, `liquid`, `hbs`, `11ty.js`, and `webc`) are provided by this plugin:
 
-* `css`, `js`, and `html` to add code to a bundle.
-* `getBundle` and `getBundleFileUrl` to get bundled code.
+* `getBundle` to retrieve bundled code as a string.
+* `getBundleFileUrl` to create a bundle file on disk and retrieve the URL to that file.
 
 Here’s a [real-world commit showing this in use on the `eleventy-base-blog` project](https://github.com/11ty/eleventy-base-blog/commit/c9595d8f42752fa72c66991c71f281ea960840c9?diff=split).
 
@@ -153,6 +154,13 @@ A `default` bucket is implied:
 
 #### Critical CSS
 
+```js
+// .eleventy.js
+module.exports = function(eleventyConfig) {
+	eleventyConfig.addBundle("css");
+};
+```
+
 Use asset bucketing to divide CSS between the `default` bucket and a `defer` bucket, loaded asynchronously.
 
 _(Note that some HTML boilerplate has been omitted from the sample below)_
@@ -185,17 +193,24 @@ _(Note that some HTML boilerplate has been omitted from the sample below)_
 
 #### SVG Icon Library
 
-Here `svg` is an asset bucket on the `html` bundle.
+Here an `svg` is bundle is created.
+
+```js
+// .eleventy.js
+module.exports = function(eleventyConfig) {
+	eleventyConfig.addBundle("svg");
+};
+```
 
 ```html
 <svg width="0" height="0" aria-hidden="true" style="position: absolute;">
-	<defs>{% getBundle "html", "svg" %}</defs>
+	<defs>{% getBundle "svg" %}</defs>
 </svg>
 
 <!-- And anywhere on your page you can add icons to the set -->
-{% html "svg" %}
+{% svg %}
 <g id="icon-close"><path d="…" /></g>
-{% endhtml %}
+{% endsvg %}
 
 And now you can use `icon-close` in as many SVG instances as you’d like (without repeating the heftier SVG content).
 
@@ -206,6 +221,13 @@ And now you can use `icon-close` in as many SVG instances as you’d like (witho
 ```
 
 #### React Helmet-style `<head>` additions
+
+```js
+// .eleventy.js
+module.exports = function(eleventyConfig) {
+	eleventyConfig.addBundle("html");
+};
+```
 
 This might exist in an Eleventy layout file:
 
@@ -259,60 +281,31 @@ To add JS to a page bundle in WebC, you would use a `<script>` element in a WebC
 
 * Existing calls via WebC helpers `getCss` or `getJs` (e.g. `<style @raw="getCss(page.url)">`) have been wired up to `getBundle` (for `"css"` and `"js"` respectively) automatically.
 	* For consistency, you may prefer using the bundle plugin method names everywhere: `<style @raw="getBundle('css')">` and `<script @raw="getBundle('js')">` both work fine.
-* Outside of WebC, the [Universal Filters `webcGetCss` and `webcGetJs`](https://www.11ty.dev/docs/languages/webc/#css-and-js-(bundler-mode)) were available to access CSS and JS bundles but are considered deprecated in favor of the `getBundle` Universal Shortcode (`{% getBundle "css" %}` and `{% getBundle "js" %}` respectively).
+* Outside of WebC, the Universal Filters `webcGetCss` and `webcGetJs` were removed in Eleventy `v3.0.0-alpha.10` in favor of the `getBundle` Universal Shortcode (`{% getBundle "css" %}` and `{% getBundle "js" %}` respectively).
 
 #### Modify the bundle output
 
 You can wire up your own async-friendly callbacks to transform the bundle output too. Here’s a quick example of [`postcss` integration](https://github.com/postcss/postcss#js-api).
 
 ```js
-const bundlerPlugin = require("@11ty/eleventy-plugin-bundle");
 const postcss = require("postcss");
 const postcssNested = require("postcss-nested");
 
 module.exports = function(eleventyConfig) {
-	eleventyConfig.addPlugin(bundlerPlugin, {
+	eleventyConfig.addBundle("css", {
 		transforms: [
 			async function(content) {
 				// this.type returns the bundle name.
-				if (this.type === 'css') {
-					// Same as Eleventy transforms, this.page is available here.
-					let result = await postcss([postcssNested]).process(content, { from: this.page.inputPath, to: null });
-					return result.css;
-				}
-
-				return content;
+				// Same as Eleventy transforms, this.page is available here.
+				let result = await postcss([postcssNested]).process(content, { from: this.page.inputPath, to: null });
+				return result.css;
 			}
 		]
 	});
 };
 ```
 
-#### Bundling on the [Edge](https://www.11ty.dev/docs/plugins/edge/)
-
-_Coming soon_
-
-## Advanced options:
-
-
-### Add your own bundle type
-
-If you’d like to add your own bundle types (in addition to the guaranteed types: `css`, `js`, and `html`), you can do so:
-
-```js
-const bundlerPlugin = require("@11ty/eleventy-plugin-bundle");
-
-module.exports = function(eleventyConfig) {
-	eleventyConfig.addPlugin(bundlerPlugin, {
-		bundles: ["possum"]
-	});
-};
-```
-
-This does two things:
-
-1. creates a new `possum` shortcode for adding arbitrary code to this bundle
-2. adds `"possum"` as an eligible type argument to `getBundle` and `getBundleFileUrl`
+## Advanced
 
 ### Limitations
 
