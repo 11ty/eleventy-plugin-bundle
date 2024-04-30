@@ -36,8 +36,7 @@ This does two things:
 1. Creates a new `css` shortcode for adding arbitrary code to this bundle
 2. Adds `"css"` as an eligible type argument to the `getBundle` and `getBundleFileUrl` shortcodes.
 
-<details>
-<summary>Expand to see all bundle options</summary>
+### More options
 
 ```js
 module.exports = function(eleventyConfig) {
@@ -63,7 +62,7 @@ module.exports = function(eleventyConfig) {
 
 Read more about [`hoist` and duplicate bundle hoisting](https://github.com/11ty/eleventy-plugin-bundle/issues/5).
 
-</details>
+### Universal Shortcodes
 
 The following Universal Shortcodes (available in `njk`, `liquid`, `hbs`, `11ty.js`, and `webc`) are provided by this plugin:
 
