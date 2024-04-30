@@ -1,8 +1,7 @@
-const test = require("ava");
-const fs = require("fs");
-const Eleventy = require("@11ty/eleventy");
-const { EleventyServerless } = require("@11ty/eleventy");
-const { EleventyRenderPlugin } = Eleventy;
+import test from "ava";
+import fs from "fs";
+import Eleventy, { RenderPlugin } from "@11ty/eleventy";
+import sass from "sass";
 
 function normalize(str) {
 	if(typeof str !== "string") {
@@ -12,7 +11,7 @@ function normalize(str) {
 }
 
 test("CSS (Nunjucks)", async t => {
-	let elev = new Eleventy("test/stubs/nunjucks/", null, { configPath: "eleventy.bundle.js" });
+	let elev = new Eleventy("test/stubs/nunjucks/", "_site", { configPath: "eleventy.bundle.js" });
 	let results = await elev.toJSON();
 	t.deepEqual(normalize(results[0].content), `<style>* { color: blue; }
 * { color: red; }
@@ -26,7 +25,7 @@ test("CSS (Nunjucks)", async t => {
 });
 
 test("CSS (Liquid)", async t => {
-	let elev = new Eleventy("test/stubs/liquid/", null, { configPath: "eleventy.bundle.js" });
+	let elev = new Eleventy("test/stubs/liquid/", "_site", { configPath: "eleventy.bundle.js" });
 	let results = await elev.toJSON();
 	t.deepEqual(normalize(results[0].content), `<style>* { color: blue; }
 * { color: red; }
@@ -40,7 +39,7 @@ test("CSS (Liquid)", async t => {
 });
 
 test("CSS (Markdown)", async t => {
-	let elev = new Eleventy("test/stubs/markdown/", null, { configPath: "eleventy.bundle.js" });
+	let elev = new Eleventy("test/stubs/markdown/", "_site", { configPath: "eleventy.bundle.js" });
 	let results = await elev.toJSON();
 	t.deepEqual(normalize(results[0].content), `<style>* { color: blue; }
 * { color: red; }
@@ -53,8 +52,8 @@ test("CSS (Markdown)", async t => {
 * { color: orange; }</style>`)
 });
 
-test("CSS (Handlebars)", async t => {
-	let elev = new Eleventy("test/stubs/handlebars/", null, { configPath: "eleventy.bundle.js" });
+test.skip("CSS (Handlebars)", async t => {
+	let elev = new Eleventy("test/stubs/handlebars/", "_site", { configPath: "eleventy.bundle.js" });
 	let results = await elev.toJSON();
 	t.deepEqual(normalize(results[0].content), `<style>* { color: blue; }
 * { color: red; }
@@ -71,7 +70,7 @@ test("CSS (Handlebars)", async t => {
 });
 
 test("SVG", async t => {
-	let elev = new Eleventy("test/stubs/nunjucks-svg/", null, { configPath: "eleventy.bundle.js" });
+	let elev = new Eleventy("test/stubs/nunjucks-svg/", "_site", { configPath: "eleventy.bundle.js" });
 	let results = await elev.toJSON();
 	t.deepEqual(normalize(results[0].content), `<svg width="0" height="0" aria-hidden="true" style="position: absolute;">
 	<defs><g id="icon-close-legacy"><path d="M8,15 C4.13400675,15 1,11.8659932 1,8 C1,4.13400675 4.13400675,1 8,1 C11.8659932,1 15,4.13400675 15,8 C15,11.8659932 11.8659932,15 8,15 Z M10.44352,10.7233105 L10.4528296,10.7326201 L10.7326201,10.4528296 C11.0310632,10.1543865 11.0314986,9.66985171 10.7335912,9.37194437 L9.36507937,8.0034325 L10.7360526,6.63245928 C11.0344957,6.33401613 11.0349311,5.84948135 10.7370237,5.55157401 L10.448426,5.26297627 C10.1505186,4.96506892 9.66598387,4.96550426 9.36754072,5.26394741 L8.00589385,6.62559428 L6.63738198,5.25708241 C6.33947464,4.95917507 5.85493986,4.95961041 5.55649671,5.25805356 L5.26737991,5.54717036 C4.96893676,5.84561351 4.96850142,6.33014829 5.26640876,6.62805563 L6.62561103,7.9872579 L5.25463781,9.35823112 C4.95619466,9.65667427 4.95575932,10.141209 5.25366666,10.4391164 L5.5422644,10.7277141 C5.84017175,11.0256215 6.32470652,11.0251861 6.62314967,10.726743 L7.99412289,9.35576976 L9.36263476,10.7242816 C9.66054211,11.022189 10.1450769,11.0217536 10.44352,10.7233105 Z" /></g></defs>
@@ -79,7 +78,7 @@ test("SVG", async t => {
 });
 
 test("JS", async t => {
-	let elev = new Eleventy("test/stubs/liquid-js/", null, { configPath: "eleventy.bundle.js" });
+	let elev = new Eleventy("test/stubs/liquid-js/", "_site", { configPath: "eleventy.bundle.js" });
 	let results = await elev.toJSON();
 	t.deepEqual(normalize(results[0].content), `<script>alert(1);
 alert(2);
@@ -93,7 +92,7 @@ alert(3);</script>`)
 });
 
 test("CSS, two buckets", async t => {
-	let elev = new Eleventy("test/stubs/liquid-buckets/", null, { configPath: "eleventy.bundle.js" });
+	let elev = new Eleventy("test/stubs/liquid-buckets/", "_site", { configPath: "eleventy.bundle.js" });
 	let results = await elev.toJSON();
 	t.deepEqual(normalize(results[0].content), `<style>* { color: blue; }
 * { color: orange; }</style>
@@ -102,8 +101,9 @@ test("CSS, two buckets", async t => {
 });
 
 test("CSS, two buckets, explicit `default`", async t => {
-	let elev = new Eleventy("test/stubs/liquid-buckets-default/", null, { configPath: "eleventy.bundle.js" });
+	let elev = new Eleventy("test/stubs/liquid-buckets-default/", "_site", { configPath: "eleventy.bundle.js" });
 	let results = await elev.toJSON();
+
 	t.deepEqual(normalize(results[0].content), `<style>* { color: blue; }
 * { color: orange; }</style>
 <style>* { color: blue; }
@@ -112,7 +112,7 @@ test("CSS, two buckets, explicit `default`", async t => {
 });
 
 test("CSS, get two buckets at once", async t => {
-	let elev = new Eleventy("test/stubs/buckets-get-multiple/", null, { configPath: "eleventy.bundle.js" });
+	let elev = new Eleventy("test/stubs/buckets-get-multiple/", "_site", { configPath: "eleventy.bundle.js" });
 	let results = await elev.toJSON();
 	t.deepEqual(normalize(results[0].content), `<style>* { color: blue; }
 * { color: orange; }
@@ -120,7 +120,7 @@ test("CSS, get two buckets at once", async t => {
 });
 
 test("CSS, get two buckets at once, reverse order", async t => {
-	let elev = new Eleventy("test/stubs/buckets-ordering/", null, { configPath: "eleventy.bundle.js" });
+	let elev = new Eleventy("test/stubs/buckets-ordering/", "_site", { configPath: "eleventy.bundle.js" });
 	let results = await elev.toJSON();
 	t.deepEqual(normalize(results[0].content), `<style>* { color: blue; }
 * { color: red; }
@@ -128,7 +128,7 @@ test("CSS, get two buckets at once, reverse order", async t => {
 });
 
 test("CSS, get two buckets at once (comma separated list)", async t => {
-	let elev = new Eleventy("test/stubs/buckets-get-multiple-comma-sep/", null, { configPath: "eleventy.bundle.js" });
+	let elev = new Eleventy("test/stubs/buckets-get-multiple-comma-sep/", "_site", { configPath: "eleventy.bundle.js" });
 	let results = await elev.toJSON();
 	t.deepEqual(normalize(results[0].content), `<style>* { color: blue; }
 * { color: orange; }
@@ -136,7 +136,7 @@ test("CSS, get two buckets at once (comma separated list)", async t => {
 });
 
 test("toFile Filter (no writes)", async t => {
-	let elev = new Eleventy("test/stubs/to-file/", null, { configPath: "eleventy.bundle.js" });
+	let elev = new Eleventy("test/stubs/to-file/", "_site", { configPath: "eleventy.bundle.js" });
 	let results = await elev.toJSON();
 	t.deepEqual(normalize(results[0].content), `<style>* { color: blue; }
 * { color: red; }
@@ -200,18 +200,16 @@ test("toFile Filter (write files, out of order)", async t => {
 });
 
 test("Bundle in Layout file", async t => {
-	let elev = new Eleventy("test/stubs/bundle-in-layout/", null, { configPath: "eleventy.bundle.js" });
+	let elev = new Eleventy("test/stubs/bundle-in-layout/", "_site", { configPath: "eleventy.bundle.js" });
 	let results = await elev.toJSON();
 	t.deepEqual(normalize(results[0].content), `<!doctype html><html><head><link href="https://v1.opengraph.11ty.dev" rel="preconnect" crossorigin></head></html>`);
 });
 
 test("Bundle with render plugin", async t => {
-	const sass = require("sass");
-
 	let elev = new Eleventy("test/stubs/bundle-render/", undefined, {
 		configPath: "eleventy.bundle.js",
 		config: function(eleventyConfig) {
-			eleventyConfig.addPlugin(EleventyRenderPlugin);
+			eleventyConfig.addPlugin(RenderPlugin);
 
 			eleventyConfig.addExtension("scss", {
 				outputFileExtension: "css",
@@ -237,7 +235,7 @@ h1 .test {
 });
 
 test("No bundling", async t => {
-	let elev = new Eleventy("test/stubs/no-bundles/", null, { configPath: "eleventy.bundle.js" });
+	let elev = new Eleventy("test/stubs/no-bundles/", "_site", { configPath: "eleventy.bundle.js" });
 	let results = await elev.toJSON();
 	t.deepEqual(normalize(results[0].content), `<!doctype html>
 <html lang="en">
@@ -333,16 +331,4 @@ test("`defer` hoisting", async t => {
 	t.deepEqual(normalize(results[2].content), `<style>* { color: blue; }</style>
 <style></style>
 <style></style>`);
-});
-
-test("Ignore missing `file.outputPath` when running under Serverless", async t => {
-	let elev = new EleventyServerless("test1", {
-		path: "/",
-		query: {},
-		inputDir: "./test/stubs/serverless-stubs/",
-		functionsDir: "./test/stubs/serverless-stubs/functions/",
-	});
-
-	let results = await elev.getOutput();
-	t.deepEqual(normalize(results[0].content), `<style>* { color: blue; }</style>`);
 });

@@ -1,6 +1,8 @@
 const BundleFileOutput = require("./BundleFileOutput");
 const debug = require("debug")("Eleventy:Bundle");
 
+const DEBUG_LOG_TRUNCATION_SIZE = 200;
+
 class CodeManager {
 	// code is placed in this bucket by default
 	static DEFAULT_BUCKET_NAME = "default";
@@ -14,6 +16,11 @@ class CodeManager {
 		this.reset();
 		this.transforms = [];
 		this.isHoisting = true;
+		this.fileExtension = undefined;
+	}
+
+	setFileExtension(ext) {
+		this.fileExtension = ext;
 	}
 
 	setHoisting(enabled) {
@@ -72,7 +79,8 @@ class CodeManager {
 		for(let b of buckets) {
 			this._initBucket(pageUrl, b);
 
-			debug("Adding code to bundle %o for %o (bucket: %o): %o", this.name, pageUrl, b, codeContent);
+			let debugLoggedContent = codeContent.join("\n");
+			debug("Adding code to bundle %o for %o (bucket: %o, size: %o): %o", this.name, pageUrl, b, debugLoggedContent.length, debugLoggedContent.length > DEBUG_LOG_TRUNCATION_SIZE ? debugLoggedContent.slice(0, DEBUG_LOG_TRUNCATION_SIZE) + "…" : debugLoggedContent);
 			for(let content of codeContent) {
 				this.pages[pageUrl][b].add(content);
 			}
@@ -144,6 +152,7 @@ class CodeManager {
 		// TODO the bundle output URL might be useful in the transforms for sourcemaps
 		let content = await this.getForPage(pageData, buckets);
 		let writer = new BundleFileOutput(output, bundle);
+		writer.setFileExtension(this.fileExtension);
 		return writer.writeBundle(content, this.name, write);
 	}
 

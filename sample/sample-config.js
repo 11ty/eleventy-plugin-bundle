@@ -1,6 +1,29 @@
 const bundlePlugin = require("../");
 
 module.exports = function(eleventyConfig) {
+	// This call is what Eleventy will do in the default config in 3.0.0-alpha.10
+	eleventyConfig.addPlugin(bundlePlugin, {
+		bundles: false,
+		immediate: true
+	});
+
+	// adds html, css, js (maintain existing API)
 	eleventyConfig.addPlugin(bundlePlugin);
-	eleventyConfig.addPlugin(bundlePlugin);
+
+	// ignored, already exists
+	eleventyConfig.addBundle("css");
+	// ignored, already exists
+	eleventyConfig.addBundle("css");
+	// ignored, already exists
+	eleventyConfig.addBundle("css");
+	// ignored, already exists
+	eleventyConfig.addBundle("html");
+
+	// new!
+	eleventyConfig.addBundle("stylesheet", {
+		outputFileExtension: "css",
+		shortcodeName: "stylesheet",
+		transforms: [],
+		// hoist: true,
+	});
 };

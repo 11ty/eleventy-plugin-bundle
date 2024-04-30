@@ -1,31 +1,49 @@
 const pkg = require("./package.json");
+const bundleManagersPlugin = require("./eleventy.bundleManagers.js");
 const shortcodesPlugin = require("./eleventy.shortcodes.js");
+const debug = require("debug")("Eleventy:Bundle");
 
 function normalizeOptions(options = {}) {
 	options = Object.assign({
 		// Plugin defaults
-		bundles: [], // extra bundles: css, js, and html are guaranteed
+		bundles: [], // extra bundles: css, js, and html are guaranteed unless `bundles: false`
 		toFileDirectory: "bundle",
 		// post-process
 		transforms: [],
 		hoistDuplicateBundlesFor: [],
 	}, options);
 
-	options.bundles = Array.from(new Set(["css", "js", "html", ...(options.bundles || [])]));
+	if(options.bundles !== false) {
+		options.bundles = Array.from(new Set(["css", "js", "html", ...(options.bundles || [])]));
+	}
 
 	return options;
 }
 
-function eleventyBundlePlugin(eleventyConfig, options = {}) {
-	try {
-		eleventyConfig.versionCheck(pkg["11ty"].compatibility);
-	} catch(e) {
-		console.log( `WARN: Eleventy Plugin (${pkg.name}) Compatibility: ${e.message}` );
+function eleventyBundlePlugin(eleventyConfig, pluginOptions = {}) {
+	eleventyConfig.versionCheck(pkg["11ty"].compatibility);
+
+	pluginOptions = normalizeOptions(pluginOptions);
+
+	if(!("getBundleManagers" in eleventyConfig) && !("addBundle" in eleventyConfig)) {
+		bundleManagersPlugin(eleventyConfig, pluginOptions);
 	}
 
-	options = normalizeOptions(options);
+	shortcodesPlugin(eleventyConfig, pluginOptions);
 
-	shortcodesPlugin(eleventyConfig, options);
+	if(Array.isArray(pluginOptions.bundles)) {
+		debug("Adding bundles via `addPlugin`: %o", pluginOptions.bundles)
+		pluginOptions.bundles.forEach(name => {
+			let hoist = Array.isArray(pluginOptions.hoistDuplicateBundlesFor) && pluginOptions.hoistDuplicateBundlesFor.includes(name);
+
+			eleventyConfig.addBundle(name, {
+				hoist,
+				outputFileExtension: name, // default as `name`
+				shortcodeName: name, // `false` will skip shortcode
+				transforms: pluginOptions.transforms,
+			});
+		});
+	}
 };
 
 // This is used to find the package name for this plugin (used in eleventy-plugin-webc to prevent dupes)

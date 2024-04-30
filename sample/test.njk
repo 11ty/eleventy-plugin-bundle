@@ -4,6 +4,7 @@
 {%- css %}* { color: blue; }{% endcss %}
 {%- css %}* { color: red; }{% endcss %}
 <style>{% getBundle "css" %}</style>
+{%- stylesheet %}/* lololololol sdlkfjkdlsfsldkjflksd sdlfkj */{% endstylesheet %}
 
 <svg width="0" height="0" aria-hidden="true" style="position: absolute;">
 	<defs>{%- getBundle "html", "svg" %}</defs>
@@ -22,3 +23,4 @@ And now you can use `icon-close` in as many SVG instances as you’d like (witho
 <svg><use xlink:href="#icon-close"></use></svg>
 <svg><use xlink:href="#icon-close"></use></svg>
 <svg><use xlink:href="#icon-close"></use></svg>
+<style>{% getBundle "stylesheet" %}</style>

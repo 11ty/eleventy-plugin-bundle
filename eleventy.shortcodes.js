@@ -1,37 +1,17 @@
-const CodeManager = require("./codeManager.js");
 const OutOfOrderRender = require("./outOfOrderRender.js");
 const debug = require("debug")("Eleventy:Bundle");
 
-module.exports = function(eleventyConfig, options = {}) {
-	// TODO throw an error if addPlugin is called more than once per build here.
-
-	let managers = {};
-
-	options.bundles.forEach(name => {
-		managers[name] = new CodeManager(name);
-
-		if(Array.isArray(options.hoistDuplicateBundlesFor) && options.hoistDuplicateBundlesFor.includes(name)) {
-			managers[name].setHoisting(true);
-		} else {
-			managers[name].setHoisting(false);
-		}
-
-		managers[name].setTransforms(options.transforms);
-
-		// e.g. `css` shortcode to add code to page bundle
-		// These shortcode names are not configurable on purpose (for wider plugin compatibility)
-		eleventyConfig.addPairedShortcode(name, function addContent(content, bucket, urlOverride) {
-			let url = urlOverride || this.page.url;
-			managers[name].addToPage(url, content, bucket);
-			return "";
-		});
-	});
-
+module.exports = function(eleventyConfig, pluginOptions = {}) {
+	let managers = eleventyConfig.getBundleManagers();
 	let writeToFileSystem = true;
+	let pagesUsingBundles = {};
+
 	eleventyConfig.on("eleventy.before", async ({ outputMode }) => {
-		for(let key in managers) {
-			managers[key].reset();
+		if(Object.keys(managers).length === 0) {
+			return;
 		}
+
+		pagesUsingBundles = {};
 
 		if(outputMode !== "fs") {
 			writeToFileSystem = false;
@@ -43,8 +23,12 @@ module.exports = function(eleventyConfig, options = {}) {
 	// bucket can be an array
 	// This shortcode name is not configurable on purpose (for wider plugin compatibility)
 	eleventyConfig.addShortcode("getBundle", function getContent(type, bucket) {
-		if(!type || !(type in managers)) {
-			throw new Error("Invalid bundle type: " + type);
+		if(!type || !(type in managers) || Object.keys(managers).length === 0) {
+			throw new Error(`Invalid bundle type: ${type}. Available options: ${Object.keys(managers)}`);
+		}
+
+		if(this.page.url) {
+			pagesUsingBundles[this.page.url] = true;
 		}
 
 		return OutOfOrderRender.getAssetKey("get", type, bucket);
@@ -53,8 +37,12 @@ module.exports = function(eleventyConfig, options = {}) {
 	// write a bundle to the file system
 	// This shortcode name is not configurable on purpose (for wider plugin compatibility)
 	eleventyConfig.addShortcode("getBundleFileUrl", function(type, bucket) {
-		if(!type || !(type in managers)) {
-			throw new Error("Invalid bundle type: " + type);
+		if(!type || !(type in managers) || Object.keys(managers).length === 0) {
+			throw new Error(`Invalid bundle type: ${type}. Available options: ${Object.keys(managers)}`);
+		}
+
+		if(this.page.url) {
+			pagesUsingBundles[this.page.url] = true;
 		}
 
 		return OutOfOrderRender.getAssetKey("file", type, bucket);
@@ -62,11 +50,19 @@ module.exports = function(eleventyConfig, options = {}) {
 
 	eleventyConfig.addTransform("@11ty/eleventy-bundle", async function(content) {
 		// `page.outputPath` is required to perform bundle transform, unless
-		// we're running in an Eleventy Serverless context.
+		// we're running in Eleventy Serverless.
 		let missingOutputPath = !this.page.outputPath && process.env.ELEVENTY_SERVERLESS !== "true";
 		if(missingOutputPath || typeof content !== "string") {
 			return content;
 		}
+
+		// Only run if managers are in play
+		// Only run on pages that have fetched bundles via `getBundle` or `getBundleFileUrl`
+		if(Object.keys(managers).length === 0 || this.page.url && !pagesUsingBundles[this.page.url]) {
+			return content;
+		}
+
+		debug("Processing %o", this.page.url);
 
 		let render = new OutOfOrderRender(content);
 		for(let key in managers) {
@@ -74,7 +70,7 @@ module.exports = function(eleventyConfig, options = {}) {
 		}
 
 		render.setOutputDirectory(eleventyConfig.dir.output);
-		render.setBundleDirectory(options.toFileDirectory);
+		render.setBundleDirectory(pluginOptions.toFileDirectory);
 		render.setWriteToFileSystem(writeToFileSystem);
 
 		return render.replaceAll(this.page);

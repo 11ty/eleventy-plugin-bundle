@@ -13,6 +13,11 @@ class BundleFileOutput {
 		this.outputDirectory = outputDirectory;
 		this.bundleDirectory = bundleDirectory;
 		this.hashLength = 10;
+		this.fileExtension = undefined;
+	}
+
+	setFileExtension(ext) {
+		this.fileExtension = ext;
 	}
 
 	getFilenameHash(content) {
@@ -44,7 +49,7 @@ class BundleFileOutput {
 
 		let dir = path.join(this.outputDirectory, this.bundleDirectory);
 		let filenameHash = this.getFilenameHash(content);
-		let filename = this.getFilename(filenameHash, type);
+		let filename = this.getFilename(filenameHash, this.fileExtension || type);
 
 		if(writeToFileSystem) {
 			let fullPath = path.join(dir, filename);
