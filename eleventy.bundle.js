@@ -34,10 +34,10 @@ function eleventyBundlePlugin(eleventyConfig, pluginOptions = {}) {
 	if(Array.isArray(pluginOptions.bundles)) {
 		debug("Adding bundles via `addPlugin`: %o", pluginOptions.bundles)
 		pluginOptions.bundles.forEach(name => {
-			let hoist = Array.isArray(pluginOptions.hoistDuplicateBundlesFor) && pluginOptions.hoistDuplicateBundlesFor.includes(name);
+			let isHoisting = Array.isArray(pluginOptions.hoistDuplicateBundlesFor) && pluginOptions.hoistDuplicateBundlesFor.includes(name);
 
 			eleventyConfig.addBundle(name, {
-				hoist,
+				hoist: isHoisting,
 				outputFileExtension: name, // default as `name`
 				shortcodeName: name, // `false` will skip shortcode
 				transforms: pluginOptions.transforms,

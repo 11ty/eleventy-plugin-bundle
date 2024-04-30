@@ -22,13 +22,14 @@ module.exports = function(eleventyConfig, pluginOptions = {}) {
 	// e.g. `getBundle` shortcode to get code in current page bundle
 	// bucket can be an array
 	// This shortcode name is not configurable on purpose (for wider plugin compatibility)
-	eleventyConfig.addShortcode("getBundle", function getContent(type, bucket) {
+	eleventyConfig.addShortcode("getBundle", function getContent(type, bucket, explicitUrl) {
 		if(!type || !(type in managers) || Object.keys(managers).length === 0) {
 			throw new Error(`Invalid bundle type: ${type}. Available options: ${Object.keys(managers)}`);
 		}
 
-		if(this.page.url) {
-			pagesUsingBundles[this.page.url] = true;
+		let url = explicitUrl || this.page?.url;
+		if(url) {
+			pagesUsingBundles[url] = true;
 		}
 
 		return OutOfOrderRender.getAssetKey("get", type, bucket);
@@ -36,13 +37,14 @@ module.exports = function(eleventyConfig, pluginOptions = {}) {
 
 	// write a bundle to the file system
 	// This shortcode name is not configurable on purpose (for wider plugin compatibility)
-	eleventyConfig.addShortcode("getBundleFileUrl", function(type, bucket) {
+	eleventyConfig.addShortcode("getBundleFileUrl", function(type, bucket, explicitUrl) {
 		if(!type || !(type in managers) || Object.keys(managers).length === 0) {
 			throw new Error(`Invalid bundle type: ${type}. Available options: ${Object.keys(managers)}`);
 		}
 
-		if(this.page.url) {
-			pagesUsingBundles[this.page.url] = true;
+		let url = explicitUrl || this.page?.url;
+		if(url) {
+			pagesUsingBundles[url] = true;
 		}
 
 		return OutOfOrderRender.getAssetKey("file", type, bucket);

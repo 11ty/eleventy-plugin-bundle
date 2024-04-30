@@ -41,9 +41,11 @@ module.exports = function(eleventyConfig, pluginOptions = {}) {
 
 			// e.g. `css` shortcode to add code to page bundle
 			// These shortcode names are not configurable on purpose (for wider plugin compatibility)
-			eleventyConfig.addPairedShortcode(shortcodeName, function addContent(content, bucket, urlOverride) {
-				let url = urlOverride || this.page.url;
-				managers[name].addToPage(url, content, bucket);
+			eleventyConfig.addPairedShortcode(shortcodeName, function addContent(content, bucket, explicitUrl) {
+				let url = explicitUrl || this.page?.url;
+				if(url) { // don’t add if a file doesn’t have an output URL
+					managers[name].addToPage(url, content, bucket);
+				}
 				return "";
 			});
 		}
