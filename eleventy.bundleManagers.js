@@ -22,6 +22,10 @@ module.exports = function(eleventyConfig, pluginOptions = {}) {
 				managers[name].setHoisting(bundleOptions.hoist);
 			}
 
+			if(bundleOptions.bundleExportKey !== undefined) {
+				managers[name].setBundleExportKey(bundleOptions.bundleExportKey);
+			}
+
 			if(bundleOptions.outputFileExtension) {
 				managers[name].setFileExtension(bundleOptions.outputFileExtension);
 			}

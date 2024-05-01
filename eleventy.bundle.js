@@ -11,6 +11,7 @@ function normalizeOptions(options = {}) {
 		// post-process
 		transforms: [],
 		hoistDuplicateBundlesFor: [],
+		bundleExportKey: "bundle", // use a `bundle` export in a 11ty.js template to populate bundles
 	}, options);
 
 	if(options.bundles !== false) {
@@ -42,6 +43,7 @@ function eleventyBundlePlugin(eleventyConfig, pluginOptions = {}) {
 				shortcodeName: name, // `false` will skip shortcode
 				transforms: pluginOptions.transforms,
 				toFileDirectory: pluginOptions.toFileDirectory,
+				bundleExportKey: pluginOptions.bundleExportKey, // `false` will skip bundle export
 			});
 		});
 	}

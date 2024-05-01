@@ -41,21 +41,25 @@ This does two things:
 ```js
 module.exports = function(eleventyConfig) {
 	eleventyConfig.addBundle("css", {
-		// Optional, folder (relative to output directory) files will write to:
+		// (Optional) Folder (relative to output directory) files will write to
 		toFileDirectory: "bundle",
 
-		// Optional, defaults to bundle name
+		// (Optional) File extension used for bundle file output, defaults to bundle name
 		outputFileExtension: "css",
 
-		// Optional, defaults to bundle name
+		// (Optional) Name of shortcode for use in templates, defaults to bundle name
 		shortcodeName: "css",
-		// shortcodeName: false, // don’t add a shortcode.
+		// shortcodeName: false, // disable this feature.
 
-		// Optional, modify bundle content
+		// (Optional) Modify bundle content
 		transforms: [],
 
-		// Optional (advanced): if two identical code blocks exist in non-default buckets, they’ll be hoisted to the first bucket in common.
+		// (Optional) If two identical code blocks exist in non-default buckets, they’ll be hoisted to the first bucket in common.
 		hoist: true,
+
+		// (Optional) In 11ty.js templates, having a named export of `bundle` will populate your bundles.
+		bundleExportKey: "bundle",
+		// bundleExportKey: false, // disable this feature.
 	});
 };
 ```

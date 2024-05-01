@@ -18,6 +18,7 @@ class CodeManager {
 		this.isHoisting = true;
 		this.fileExtension = undefined;
 		this.toFileDirectory = undefined;
+		this.bundleExportKey = "bundle";
 	}
 
 	setFileExtension(ext) {
@@ -30,6 +31,14 @@ class CodeManager {
 
 	setBundleDirectory(dir) {
 		this.toFileDirectory = dir;
+	}
+
+	setBundleExportKey(key) {
+		this.bundleExportKey = key;
+	}
+
+	getBundleExportKey() {
+		return this.bundleExportKey;
 	}
 
 	reset() {
