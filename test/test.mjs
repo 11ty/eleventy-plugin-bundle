@@ -332,3 +332,21 @@ test("`defer` hoisting", async t => {
 <style></style>
 <style></style>`);
 });
+
+test("Bundle export key as string (11ty.js)", async t => {
+	let elev = new Eleventy("test/stubs/export-key-str/", "_site", { configPath: "test/stubs/export-key-str/eleventy.config.js" });
+	let results = await elev.toJSON();
+	t.deepEqual(normalize(results[0].content), `<style>/* Hello */</style><script>/* Hello */</script>`)
+});
+
+test("Bundle export key as object (11ty.js)", async t => {
+	let elev = new Eleventy("test/stubs/export-key-obj/", "_site", { configPath: "test/stubs/export-key-obj/eleventy.config.js" });
+	let results = await elev.toJSON();
+	t.deepEqual(normalize(results[0].content), `<style>/* CSS */</style><script>/* JS */</script>`)
+});
+
+test("Bundle export key as string, using separate bundleExportKey’s (11ty.js)", async t => {
+	let elev = new Eleventy("test/stubs/export-key-str-rename/", "_site", { configPath: "test/stubs/export-key-str-rename/eleventy.config.js" });
+	let results = await elev.toJSON();
+	t.deepEqual(normalize(results[0].content), `<style>/* CSS */</style><script>/* JS */</script>`)
+});
