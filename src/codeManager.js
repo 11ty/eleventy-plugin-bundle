@@ -13,6 +13,7 @@ class CodeManager {
 	constructor(name) {
 		this.name = name;
 		this.trimOnAdd = true;
+		// TODO unindent on add
 		this.reset();
 		this.transforms = [];
 		this.isHoisting = true;
@@ -96,7 +97,9 @@ class CodeManager {
 			let debugLoggedContent = codeContent.join("\n");
 			debug("Adding code to bundle %o for %o (bucket: %o, size: %o): %o", this.name, pageUrl, b, debugLoggedContent.length, debugLoggedContent.length > DEBUG_LOG_TRUNCATION_SIZE ? debugLoggedContent.slice(0, DEBUG_LOG_TRUNCATION_SIZE) + "…" : debugLoggedContent);
 			for(let content of codeContent) {
-				this.pages[pageUrl][b].add(content);
+				if(content) {
+					this.pages[pageUrl][b].add(content);
+				}
 			}
 		}
 	}
@@ -124,11 +127,11 @@ class CodeManager {
 		return Object.keys(this.pages[pageUrl]);
 	}
 
-	async getForPage(pageData, buckets) {
+	getRawForPage(pageData, buckets = undefined) {
 		let url = pageData.url;
 		if(!this.pages[url]) {
 			debug("No bundle code found for %o on %o, %O", this.name, url, this.pages);
-			return "";
+			return new Set();
 		}
 
 		buckets = CodeManager.normalizeBuckets(buckets);
@@ -146,6 +149,11 @@ class CodeManager {
 			}
 		}
 
+		return set;
+	}
+
+	async getForPage(pageData, buckets = undefined) {
+		let set = this.getRawForPage(pageData, buckets);
 		let bundleContent = Array.from(set).join("\n");
 
 		// returns promise

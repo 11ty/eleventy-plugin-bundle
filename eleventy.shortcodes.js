@@ -1,4 +1,4 @@
-const OutOfOrderRender = require("./outOfOrderRender.js");
+const OutOfOrderRender = require("./src/outOfOrderRender.js");
 const debug = require("debug")("Eleventy:Bundle");
 
 module.exports = function(eleventyConfig, pluginOptions = {}) {
@@ -50,7 +50,7 @@ module.exports = function(eleventyConfig, pluginOptions = {}) {
 		return OutOfOrderRender.getAssetKey("file", type, bucket);
 	});
 
-	eleventyConfig.addTransform("@11ty/eleventy-bundle", async function(content) {
+	eleventyConfig.addTransform("@11ty/eleventy-bundle", function(content) {
 		// `page.outputPath` is required to perform bundle transform, unless
 		// we're running in Eleventy Serverless.
 		let missingOutputPath = !this.page.outputPath && process.env.ELEVENTY_SERVERLESS !== "true";

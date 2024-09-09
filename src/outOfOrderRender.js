@@ -23,6 +23,14 @@ class OutOfOrderRender {
 		return `/*__EleventyBundle:${type}:${name}:${bucket || "default"}:EleventyBundle__*/`
 	}
 
+	static parseAssetKey(str) {
+		if(str.startsWith("/*__EleventyBundle:")) {
+			let [prefix, type, name, bucket, suffix] = str.split(OutOfOrderRender.SEPARATOR);
+			return { type, name, bucket };
+		}
+		return false;
+	}
+
 	setAssetManager(name, assetManager) {
 		this.managers[name] = assetManager;
 	}
@@ -32,11 +40,8 @@ class OutOfOrderRender {
 	}
 
 	normalizeMatch(match) {
-		if(match.startsWith("/*__EleventyBundle:")) {
-			let [prefix, type, name, bucket, suffix] = match.split(OutOfOrderRender.SEPARATOR);
-			return { type, name, bucket };
-		}
-		return match;
+		let ret = OutOfOrderRender.parseAssetKey(match)
+		return ret || match;
 	}
 
 	findAll() {

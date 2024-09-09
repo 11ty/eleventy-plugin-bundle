@@ -1,6 +1,6 @@
 
 const pkg = require("./package.json");
-const CodeManager = require("./codeManager.js");
+const CodeManager = require("./src/codeManager.js");
 const debug = require("debug")("Eleventy:Bundle");
 
 module.exports = function(eleventyConfig, pluginOptions = {}) {
