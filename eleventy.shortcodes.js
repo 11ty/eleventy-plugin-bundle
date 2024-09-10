@@ -1,4 +1,4 @@
-const OutOfOrderRender = require("./src/outOfOrderRender.js");
+const OutOfOrderRender = require("./src/OutOfOrderRender.js");
 const debug = require("debug")("Eleventy:Bundle");
 
 module.exports = function(eleventyConfig, pluginOptions = {}) {

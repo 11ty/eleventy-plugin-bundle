@@ -1,7 +1,7 @@
 const pkg = require("./package.json");
 const bundleManagersPlugin = require("./eleventy.bundleManagers.js");
 const shortcodesPlugin = require("./eleventy.shortcodes.js");
-const OutOfOrderRender = require("./src/outOfOrderRender.js");
+const OutOfOrderRender = require("./src/OutOfOrderRender.js");
 const debug = require("debug")("Eleventy:Bundle");
 
 function normalizeOptions(options = {}) {
