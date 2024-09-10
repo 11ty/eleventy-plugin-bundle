@@ -1,6 +1,6 @@
-const bundlePlugin = require("../");
+import bundlePlugin from "../eleventy.bundle.js";
 
-module.exports = function(eleventyConfig) {
+export default function(eleventyConfig) {
 	// This call is what Eleventy will do in the default config in 3.0.0-alpha.10
 	eleventyConfig.addPlugin(bundlePlugin, {
 		bundles: false,

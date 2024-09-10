@@ -1,6 +1,7 @@
-const BundleFileOutput = require("./BundleFileOutput");
-const debug = require("debug")("Eleventy:Bundle");
+import { BundleFileOutput } from "./BundleFileOutput.js";
+import debugUtil from "debug";
 
+const debug = debugUtil("Eleventy:Bundle");
 const DEBUG_LOG_TRUNCATION_SIZE = 200;
 
 class CodeManager {
@@ -205,4 +206,4 @@ class CodeManager {
 	}
 }
 
-module.exports = CodeManager;
+export { CodeManager };

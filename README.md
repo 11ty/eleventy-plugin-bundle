@@ -26,7 +26,7 @@ To create a bundle type, use `eleventyConfig.addBundle` in your Eleventy configu
 
 ```js
 // .eleventy.js
-module.exports = function(eleventyConfig) {
+export default function(eleventyConfig) {
 	eleventyConfig.addBundle("css");
 };
 ```
@@ -39,7 +39,7 @@ This does two things:
 ### Full options list
 
 ```js
-module.exports = function(eleventyConfig) {
+export default function(eleventyConfig) {
 	eleventyConfig.addBundle("css", {
 		// (Optional) Folder (relative to output directory) files will write to
 		toFileDirectory: "bundle",
@@ -161,7 +161,7 @@ A `default` bucket is implied:
 
 ```js
 // .eleventy.js
-module.exports = function(eleventyConfig) {
+export default function(eleventyConfig) {
 	eleventyConfig.addBundle("css");
 };
 ```
@@ -202,7 +202,7 @@ Here an `svg` is bundle is created.
 
 ```js
 // .eleventy.js
-module.exports = function(eleventyConfig) {
+export default function(eleventyConfig) {
 	eleventyConfig.addBundle("svg");
 };
 ```
@@ -229,7 +229,7 @@ And now you can use `icon-close` in as many SVG instances as you’d like (witho
 
 ```js
 // .eleventy.js
-module.exports = function(eleventyConfig) {
+export default function(eleventyConfig) {
 	eleventyConfig.addBundle("html");
 };
 ```
@@ -296,7 +296,7 @@ You can wire up your own async-friendly callbacks to transform the bundle output
 const postcss = require("postcss");
 const postcssNested = require("postcss-nested");
 
-module.exports = function(eleventyConfig) {
+export default function(eleventyConfig) {
 	eleventyConfig.addBundle("css", {
 		transforms: [
 			async function(content) {

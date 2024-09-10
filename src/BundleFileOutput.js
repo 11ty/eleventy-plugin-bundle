@@ -1,12 +1,13 @@
-const fs = require("fs");
-const path = require("path");
-const { createHash } = require("crypto");
+import fs from "node:fs";
+import path from "node:path";
+import { createHash } from "node:crypto";
+import debugUtil from "debug";
+
+const debug = debugUtil("Eleventy:Bundle");
 
 const hashCache = {};
 const directoryExistsCache = {};
 const writingCache = new Set();
-
-const debug = require("debug")("Eleventy:Bundle");
 
 class BundleFileOutput {
 	constructor(outputDirectory, bundleDirectory) {
@@ -72,4 +73,4 @@ class BundleFileOutput {
 	}
 }
 
-module.exports = BundleFileOutput;
+export { BundleFileOutput };

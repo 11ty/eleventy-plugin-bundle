@@ -1,7 +1,9 @@
-const OutOfOrderRender = require("./src/OutOfOrderRender.js");
-const debug = require("debug")("Eleventy:Bundle");
+import { OutOfOrderRender } from "./OutOfOrderRender.js";
+import debugUtil from "debug";
 
-module.exports = function(eleventyConfig, pluginOptions = {}) {
+const debug = debugUtil("Eleventy:Bundle");
+
+function eleventyBundleShortcodes(eleventyConfig, pluginOptions = {}) {
 	let managers = eleventyConfig.getBundleManagers();
 	let writeToFileSystem = true;
 	let pagesUsingBundles = {};
@@ -77,3 +79,5 @@ module.exports = function(eleventyConfig, pluginOptions = {}) {
 		return render.replaceAll(this.page);
 	});
 };
+
+export default eleventyBundleShortcodes;

@@ -1,4 +1,6 @@
-const debug = require("debug")("Eleventy:Bundle");
+import debugUtil from "debug";
+
+const debug = debugUtil("Eleventy:Bundle");
 
 /* This class defers any `bundleGet` calls to a post-build transform step,
  * to allow `getBundle` to be called before all of the `css` additions have been processed
@@ -148,4 +150,4 @@ class OutOfOrderRender {
 	}
 }
 
-module.exports = OutOfOrderRender;
+export { OutOfOrderRender };

@@ -52,23 +52,6 @@ test("CSS (Markdown)", async t => {
 * { color: orange; }</style>`)
 });
 
-test.skip("CSS (Handlebars)", async t => {
-	let elev = new Eleventy("test/stubs/handlebars/", "_site", { configPath: "eleventy.bundle.js" });
-	let results = await elev.toJSON();
-	t.deepEqual(normalize(results[0].content), `<style>* { color: blue; }
-* { color: red; }
-* { color: orange; }</style>
-
-<style>* { color: blue; }
-* { color: red; }
-* { color: orange; }</style>
-
-
-<style>* { color: blue; }
-* { color: red; }
-* { color: orange; }</style>`)
-});
-
 test("SVG", async t => {
 	let elev = new Eleventy("test/stubs/nunjucks-svg/", "_site", { configPath: "eleventy.bundle.js" });
 	let results = await elev.toJSON();

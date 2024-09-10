@@ -3,6 +3,7 @@
 	"version": "2.0.2",
 	"description": "Little bundles of code, little bundles of joy.",
 	"main": "eleventy.bundle.js",
+	"type": "module",
 	"scripts": {
 		"sample": "DEBUG=Eleventy:Bundle npx @11ty/eleventy --config=sample/sample-config.js --input=sample --serve",
 		"test": "npx ava"
@@ -48,7 +49,7 @@
 		]
 	},
 	"devDependencies": {
-		"@11ty/eleventy": "3.0.0-alpha.14",
+		"@11ty/eleventy": "3.0.0-alpha.19",
 		"ava": "^5.3.1",
 		"postcss": "^8.4.31",
 		"postcss-nested": "^6.0.1",

@@ -1,6 +1,6 @@
-const bundlePlugin = require("../../../");
+import bundlePlugin from "../../../eleventy.bundle.js";
 
-module.exports = function(eleventyConfig) {
+export default function(eleventyConfig) {
 	eleventyConfig.addPlugin(bundlePlugin, {
 		hoistDuplicateBundlesFor: ["css", "js"],
 	});

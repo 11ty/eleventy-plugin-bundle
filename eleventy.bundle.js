@@ -1,8 +1,11 @@
+import { createRequire } from "node:module";
+import bundleManagersPlugin from "./src/eleventy.bundleManagers.js";
+import shortcodesPlugin from "./src/eleventy.shortcodes.js";
+import debugUtil from "debug";
+
+const require = createRequire(import.meta.url);
+const debug = debugUtil("Eleventy:Bundle");
 const pkg = require("./package.json");
-const bundleManagersPlugin = require("./eleventy.bundleManagers.js");
-const shortcodesPlugin = require("./eleventy.shortcodes.js");
-const OutOfOrderRender = require("./src/OutOfOrderRender.js");
-const debug = require("debug")("Eleventy:Bundle");
 
 function normalizeOptions(options = {}) {
 	options = Object.assign({
@@ -34,6 +37,7 @@ function eleventyBundlePlugin(eleventyConfig, pluginOptions = {}) {
 	// should this be unique too?
 	shortcodesPlugin(eleventyConfig, pluginOptions);
 
+
 	if(Array.isArray(pluginOptions.bundles)) {
 		debug("Adding bundles via `addPlugin`: %o", pluginOptions.bundles)
 		pluginOptions.bundles.forEach(name => {
@@ -56,6 +60,5 @@ Object.defineProperty(eleventyBundlePlugin, "eleventyPackage", {
 	value: pkg.name
 });
 
-module.exports = eleventyBundlePlugin;
-module.exports.normalizeOptions = normalizeOptions;
-module.exports.OutOfOrderRender = OutOfOrderRender;
+export default eleventyBundlePlugin;
+export { normalizeOptions };

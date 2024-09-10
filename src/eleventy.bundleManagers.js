@@ -1,9 +1,12 @@
+import { createRequire } from "node:module";
+import debugUtil from "debug";
+import { CodeManager } from "./CodeManager.js";
 
-const pkg = require("./package.json");
-const CodeManager = require("./src/CodeManager.js");
-const debug = require("debug")("Eleventy:Bundle");
+const require = createRequire(import.meta.url);
+const debug = debugUtil("Eleventy:Bundle");
+const pkg = require("../package.json");
 
-module.exports = function(eleventyConfig, pluginOptions = {}) {
+function eleventyBundleManagers(eleventyConfig, pluginOptions = {}) {
 	if("getBundleManagers" in eleventyConfig || "addBundle" in eleventyConfig) {
 		throw new Error("Duplicate plugin calls for " + pkg.name);
 	}
@@ -67,3 +70,5 @@ module.exports = function(eleventyConfig, pluginOptions = {}) {
 		}
 	});
 };
+
+export default eleventyBundleManagers;
