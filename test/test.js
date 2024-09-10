@@ -1,7 +1,7 @@
 import test from "ava";
 import fs from "fs";
 import Eleventy, { RenderPlugin } from "@11ty/eleventy";
-import sass from "sass";
+import * as sass from "sass";
 
 function normalize(str) {
 	if(typeof str !== "string") {
