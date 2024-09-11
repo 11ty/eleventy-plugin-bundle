@@ -1,5 +1,6 @@
 import { createRequire } from "node:module";
 import bundleManagersPlugin from "./src/eleventy.bundleManagers.js";
+import pruneEmptyBundlesPlugin from "./src/eleventy.pruneEmptyBundles.js";
 import shortcodesPlugin from "./src/eleventy.shortcodes.js";
 import debugUtil from "debug";
 
@@ -34,9 +35,10 @@ function eleventyBundlePlugin(eleventyConfig, pluginOptions = {}) {
 		bundleManagersPlugin(eleventyConfig, pluginOptions);
 	}
 
+	pruneEmptyBundlesPlugin(eleventyConfig, pluginOptions);
+
 	// should this be unique too?
 	shortcodesPlugin(eleventyConfig, pluginOptions);
-
 
 	if(Array.isArray(pluginOptions.bundles)) {
 		debug("Adding bundles via `addPlugin`: %o", pluginOptions.bundles)
