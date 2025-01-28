@@ -37,16 +37,16 @@ function eleventyBundlePlugin(eleventyConfig, pluginOptions = {}) {
 
 	let alreadyAdded = "getBundleManagers" in eleventyConfig || "addBundle" in eleventyConfig;
 	if(!alreadyAdded || pluginOptions.force) {
-		if(alreadyAdded) {
+		if(alreadyAdded && pluginOptions.force) {
 			debug("Bundle plugin already added via `addPlugin`, add was forced via `force: true`");
 		}
 
 		bundleManagersPlugin(eleventyConfig, pluginOptions);
-
-		pruneEmptyBundlesPlugin(eleventyConfig, pluginOptions);
-
-		globalShortcodesAndTransforms(eleventyConfig, pluginOptions);
 	}
+
+	// These can’t be unique (don’t skip re-add above), when the configuration file resets they need to be added again
+	pruneEmptyBundlesPlugin(eleventyConfig, pluginOptions);
+	globalShortcodesAndTransforms(eleventyConfig, pluginOptions);
 
 	// Support subsequent calls like addPlugin(BundlePlugin, { bundles: [] });
 	if(Array.isArray(pluginOptions.bundles)) {

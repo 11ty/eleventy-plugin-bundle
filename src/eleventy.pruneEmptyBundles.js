@@ -32,22 +32,22 @@ function eleventyPruneEmptyBundles(eleventyConfig, options = {}) {
 	// `false` to disable
 	options.pruneEmptySelector = options.pruneEmptySelector ?? `style,script,link[rel="stylesheet"]`;
 
+	// Subsequent call can remove a previously added `addPosthtmlPlugin` entry
+	// htmlTransformer.remove is v3.0.1-alpha.4+
+	if(typeof eleventyConfig.htmlTransformer.remove === "function") {
+		eleventyConfig.htmlTransformer.remove("html", entry => {
+			if(entry.name === POSTHTML_PLUGIN_NAME) {
+				return true;
+			}
+
+			// Temporary workaround for missing `name` property.
+			let fnStr = entry.fn.toString();
+			return !entry.name && fnStr.startsWith("function (pluginOptions = {}) {") && fnStr.includes(`tree.match(matchHelper(options.pruneEmptySelector), function (node)`);
+		});
+	}
+
 	// `false` disables this plugin
 	if(options.pruneEmptySelector === false) {
-		// Subsequent call can remove a previously added `addPosthtmlPlugin` entry
-		// htmlTransformer.remove is v3.0.1-alpha.4+
-		if(typeof eleventyConfig.htmlTransformer.remove === "function") {
-			eleventyConfig.htmlTransformer.remove("html", entry => {
-				if(entry.name === POSTHTML_PLUGIN_NAME) {
-					return true;
-				}
-
-				// Temporary workaround for missing `name` property.
-				let fnStr = entry.fn.toString();
-				return !entry.name && fnStr.startsWith("function (pluginOptions = {}) {") && fnStr.includes(`tree.match(matchHelper(options.pruneEmptySelector), function (node)`);
-			});
-		}
-
 		return;
 	}
 
