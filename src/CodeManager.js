@@ -21,6 +21,15 @@ class CodeManager {
 		this.fileExtension = undefined;
 		this.toFileDirectory = undefined;
 		this.bundleExportKey = "bundle";
+		this.runsAfterHtmlTransformer = false;
+	}
+
+	setDelayed(isDelayed) {
+		this.runsAfterHtmlTransformer = Boolean(isDelayed);
+	}
+
+	isDelayed() {
+		return this.runsAfterHtmlTransformer;
 	}
 
 	setFileExtension(ext) {

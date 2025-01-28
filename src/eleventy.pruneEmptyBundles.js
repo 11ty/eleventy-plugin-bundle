@@ -5,7 +5,9 @@ const debug = debugUtil("Eleventy:Bundle");
 
 const ATTRS = {
 	keep: "eleventy:keep"
-}
+};
+
+const POSTHTML_PLUGIN_NAME = "11ty/eleventy-bundle/prune-empty";
 
 function getTextNodeContent(node) {
 	if (!node.content) {
@@ -32,6 +34,20 @@ function eleventyPruneEmptyBundles(eleventyConfig, options = {}) {
 
 	// `false` disables this plugin
 	if(options.pruneEmptySelector === false) {
+		// Subsequent call can remove a previously added `addPosthtmlPlugin` entry
+		// htmlTransformer.remove is v3.0.1-alpha.4+
+		if(typeof eleventyConfig.htmlTransformer.remove === "function") {
+			eleventyConfig.htmlTransformer.remove("html", entry => {
+				if(entry.name === POSTHTML_PLUGIN_NAME) {
+					return true;
+				}
+
+				// Temporary workaround for missing `name` property.
+				let fnStr = entry.fn.toString();
+				return !entry.name && fnStr.startsWith("function (pluginOptions = {}) {") && fnStr.includes(`tree.match(matchHelper(options.pruneEmptySelector), function (node)`);
+			});
+		}
+
 		return;
 	}
 
@@ -42,7 +58,7 @@ function eleventyPruneEmptyBundles(eleventyConfig, options = {}) {
 
 	eleventyConfig.htmlTransformer.addPosthtmlPlugin(
 		"html",
-		function (pluginOptions = {}) {
+		function bundlePruneEmptyPosthtmlPlugin(pluginOptions = {}) {
 			return function (tree) {
 				tree.match(matchHelper(options.pruneEmptySelector), function (node) {
 					if(node.attrs && node.attrs[ATTRS.keep] !== undefined) {
@@ -77,6 +93,7 @@ function eleventyPruneEmptyBundles(eleventyConfig, options = {}) {
 			};
 		},
 		{
+			name: POSTHTML_PLUGIN_NAME,
 			// the `enabled` callback for plugins is available on v3.0.0-alpha.20+ and v3.0.0-beta.2+
 			enabled: () => {
 				return Object.keys(eleventyConfig.getBundleManagers()).length > 0;

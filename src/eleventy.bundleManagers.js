@@ -7,19 +7,25 @@ const debug = debugUtil("Eleventy:Bundle");
 const pkg = require("../package.json");
 
 function eleventyBundleManagers(eleventyConfig, pluginOptions = {}) {
-	if("getBundleManagers" in eleventyConfig || "addBundle" in eleventyConfig) {
-		throw new Error("Duplicate plugin calls for " + pkg.name);
+	if(pluginOptions.force) {
+		// no errors
+	} else if(("getBundleManagers" in eleventyConfig || "addBundle" in eleventyConfig)) {
+		throw new Error("Duplicate addPlugin calls for " + pkg.name);
 	}
 
 	let managers = {};
 
 	function addBundle(name, bundleOptions = {}) {
 		if(name in managers) {
-			debug("Bundle exists %o, skipping.", name);
 			// note: shortcode must still be added
+			debug("Bundle exists %o, skipping.", name);
 		} else {
 			debug("Creating new bundle %o", name);
 			managers[name] = new CodeManager(name);
+
+			if(bundleOptions.delayed !== undefined) {
+				managers[name].setDelayed(bundleOptions.delayed);
+			}
 
 			if(bundleOptions.hoist !== undefined) {
 				managers[name].setHoisting(bundleOptions.hoist);

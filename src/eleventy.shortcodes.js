@@ -8,6 +8,29 @@ function eleventyBundleShortcodes(eleventyConfig, pluginOptions = {}) {
 	let writeToFileSystem = true;
 	let pagesUsingBundles = {};
 
+	function bundleTransform(content, stage = 0) {
+		if(typeof content !== "string") {
+			return content;
+		}
+
+		// Only run if managers are in play
+		// Only run on pages that have fetched bundles via `getBundle` or `getBundleFileUrl`
+		if(Object.keys(managers).length === 0 || this.page.url && !pagesUsingBundles[this.page.url]) {
+			return content;
+		}
+
+		debug("Processing %o", this.page.url);
+		let render = new OutOfOrderRender(content);
+		for(let key in managers) {
+			render.setAssetManager(key, managers[key]);
+		}
+
+		render.setOutputDirectory(eleventyConfig.directories.output);
+		render.setWriteToFileSystem(writeToFileSystem);
+
+		return render.replaceAll(this.page, stage);
+	}
+
 	eleventyConfig.on("eleventy.before", async ({ outputMode }) => {
 		if(Object.keys(managers).length === 0) {
 			return;
@@ -52,31 +75,27 @@ function eleventyBundleShortcodes(eleventyConfig, pluginOptions = {}) {
 		return OutOfOrderRender.getAssetKey("file", type, bucket);
 	});
 
-	eleventyConfig.addTransform("@11ty/eleventy-bundle", function(content) {
-		// `page.outputPath` is required to perform bundle transform, unless
-		// we're running in Eleventy Serverless.
-		let missingOutputPath = !this.page.outputPath && process.env.ELEVENTY_SERVERLESS !== "true";
-		if(missingOutputPath || typeof content !== "string") {
+	eleventyConfig.addTransform("@11ty/eleventy-bundle", function (content) {
+		let hasNonDelayedManagers = Boolean(Object.values(eleventyConfig.getBundleManagers()).find(manager => {
+			return typeof manager.isDelayed !== "function" || !manager.isDelayed();
+		}));
+		if(hasNonDelayedManagers) {
+			return bundleTransform.call(this, content, 0);
+		}
+		return content;
+	});
+
+	eleventyConfig.addPlugin((eleventyConfig) => {
+		// Delayed bundles *MUST* not alter URLs
+		eleventyConfig.addTransform("@11ty/eleventy-bundle/delayed", function (content) {
+			let hasDelayedManagers = Boolean(Object.values(eleventyConfig.getBundleManagers()).find(manager => {
+				return typeof manager.isDelayed === "function" && manager.isDelayed();
+			}));
+			if(hasDelayedManagers) {
+				return bundleTransform.call(this, content, 1);
+			}
 			return content;
-		}
-
-		// Only run if managers are in play
-		// Only run on pages that have fetched bundles via `getBundle` or `getBundleFileUrl`
-		if(Object.keys(managers).length === 0 || this.page.url && !pagesUsingBundles[this.page.url]) {
-			return content;
-		}
-
-		debug("Processing %o", this.page.url);
-
-		let render = new OutOfOrderRender(content);
-		for(let key in managers) {
-			render.setAssetManager(key, managers[key]);
-		}
-
-		render.setOutputDirectory(eleventyConfig.directories.output);
-		render.setWriteToFileSystem(writeToFileSystem);
-
-		return render.replaceAll(this.page);
+		});
 	});
 };
 

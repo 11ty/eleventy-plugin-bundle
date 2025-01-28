@@ -4,6 +4,26 @@ import Eleventy, { RenderPlugin } from "@11ty/eleventy";
 import * as sass from "sass";
 import bundlePlugin from "../eleventy.bundle.js";
 
+// Special testing notes regarding overriding the bundled-with-core Bundle Plugin and using the Bundle Plugin from this repo:
+// Options: use a `configPath` with `force: true`
+// Use `eleventy.beforeConfig` event with `config` callback (read more below)
+
+// Configuration order of execution:
+// 1. `config` callback
+// 2. `defaultConfig.js` file from core repo
+// 3. `configPath` file
+
+// eleventy.beforeConfig event approach:
+// If you want to use a `config` callback to overwrite the built-in Bundle Plugin, use this pattern instead:
+// config: function(eleventyConfig) {
+// 	eleventyConfig.on("eleventy.beforeConfig", () => {
+// 		eleventyConfig.addPlugin(bundlePlugin, {
+// 			immediate: true,
+// 			force: true,
+// 		});
+// 	});
+// }
+
 function normalize(str) {
 	if(typeof str !== "string") {
 		throw new Error("Could not find content: " + str);
@@ -366,16 +386,11 @@ test("Empty CSS bundle (trimmed) removes empty <link rel=stylesheet> tag", async
 	t.deepEqual(normalize(results[0].content), `<div></div>`)
 });
 
-test("Empty CSS bundle (trimmed) does *not* remove empty <style> tag", async t => {
+// TODO this requires `htmlTransformer.remove` which is core v3.0.1-alpha.4+
+test.skip("Empty CSS bundle (trimmed) does *not* remove empty <style> tag (unskip after Eleventy v3.0.1+)", async t => {
 	let elev = new Eleventy("test/stubs-virtual/", "_site", {
-		config: function(eleventyConfig) {
-			eleventyConfig.addPlugin(bundlePlugin, {
-				pruneEmptySelector: false,
-			});
-
-			eleventyConfig.addTemplate('test.njk', `<div></div><style>{% getBundle "css" %}</style>
-{%- css %}            {% endcss %}`)
-		}
+		// See testing note at top of this file
+		configPath: "test/stubs/no-prune/eleventy.config.js",
 	});
 	let results = await elev.toJSON();
 	t.deepEqual(normalize(results[0].content), `<div></div><style></style>`)
@@ -409,4 +424,31 @@ test("<style> is left as-is (not removed) because there are *no* bundles", async
 
 	let results = await elev.toJSON();
 	t.deepEqual(normalize(results[0].content), `<div></div><style></style>`)
+});
+
+test("Delayed Bundle can be modified by transforms", async t => {
+	let elev = new Eleventy("test/stubs-virtual/", "_site", {
+		// See testing note at top of this file
+		configPath: "test/stubs/delayed-bundle/eleventy.config.js",
+	});
+
+	let results = await elev.toJSON();
+	t.deepEqual(normalize(results[0].content), `testing:this is svg`)
+});
+
+test("config and configPath handles multiple addPlugin calls just fine", async t => {
+	let elev = new Eleventy("test/stubs-virtual/", "_site", {
+		// See testing note at top of this file
+		configPath: "test/stubs/duplicate-addplugins/eleventy.config.js",
+		config: function(eleventyConfig) {
+			eleventyConfig.addPlugin(bundlePlugin, {
+				bundles: false,
+			});
+
+			eleventyConfig.addTemplate('test.njk', `<div></div>`)
+		}
+	});
+
+	let results = await elev.toJSON();
+	t.deepEqual(normalize(results[0].content), `<div></div>`)
 });

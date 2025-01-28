@@ -76,7 +76,7 @@ class OutOfOrderRender {
 		return this.managers[name];
 	}
 
-	async replaceAll(pageData) {
+	async replaceAll(pageData, stage = 0) {
 		let matches = this.findAll();
 		let availableBucketsForPage = this.getAllBucketsForPage(pageData);
 		let usedBucketsOnPage = new Set();
@@ -125,6 +125,11 @@ class OutOfOrderRender {
 
 			let {type, name, bucket} = match;
 			let manager = this.getManager(name);
+
+			// Quit early if in stage 0, run delayed replacements if in stage 1+
+			if(typeof manager.isDelayed === "function" && manager.isDelayed() && stage === 0) {
+				return OutOfOrderRender.getAssetKey(type, name, bucket);
+			}
 
 			if(type === "get") {
 				// returns promise
