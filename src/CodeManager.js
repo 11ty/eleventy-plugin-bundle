@@ -104,11 +104,12 @@ class CodeManager {
 		for(let b of buckets) {
 			this._initBucket(pageUrl, b);
 
-			let debugLoggedContent = codeContent.join("\n");
-			debug("Adding code to bundle %o for %o (bucket: %o, size: %o): %o", this.name, pageUrl, b, debugLoggedContent.length, debugLoggedContent.length > DEBUG_LOG_TRUNCATION_SIZE ? debugLoggedContent.slice(0, DEBUG_LOG_TRUNCATION_SIZE) + "…" : debugLoggedContent);
 			for(let content of codeContent) {
 				if(content) {
-					this.pages[pageUrl][b].add(content);
+					if(!this.pages[pageUrl][b].has(content)) {
+						debug("Adding code to bundle %o for %o (bucket: %o, size: %o): %o", this.name, pageUrl, b, content.length, content.length > DEBUG_LOG_TRUNCATION_SIZE ? content.slice(0, DEBUG_LOG_TRUNCATION_SIZE) + "…" : content);
+						this.pages[pageUrl][b].add(content);
+					}
 				}
 			}
 		}
@@ -146,8 +147,8 @@ class CodeManager {
 
 		buckets = CodeManager.normalizeBuckets(buckets);
 
-		debug("Retrieving %o for %o (buckets: %o)", this.name, url, buckets);
 		let set = new Set();
+		let size = 0;
 		for(let b of buckets) {
 			if(!this.pages[url][b]) {
 				// Just continue, if you retrieve code from a bucket that doesn’t exist or has no code, it will return an empty set
@@ -155,10 +156,12 @@ class CodeManager {
 			}
 
 			for(let entry of this.pages[url][b]) {
+				size += entry.length;
 				set.add(entry);
 			}
 		}
 
+		debug("Retrieving %o for %o (buckets: %o, entries: %o, size: %o)", this.name, url, buckets, set.size, size);
 		return set;
 	}
 
