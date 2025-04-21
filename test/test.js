@@ -460,7 +460,7 @@ test("<style> plucked into bundle", async t => {
 	});
 
 	let results = await elev.toJSON();
-	t.deepEqual(normalize(results[0].content), `<div></div><style>* { color: red }
+	t.deepEqual(normalize(results[0].content), `<style>* { color: yellow }</style><div></div><style>* { color: red }
 body { color: blue }</style>`)
 });
 
