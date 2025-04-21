@@ -10,7 +10,7 @@ const ATTRS = {
 const POSTHTML_PLUGIN_NAME = "11ty/eleventy/html-bundle-plucker";
 
 function hasAttribute(node, name) {
-	return Boolean(node?.attrs?.[name]);
+	return node?.attrs?.[name] !== undefined;
 }
 
 function addHtmlPlucker(eleventyConfig, bundleManager) {
@@ -33,6 +33,7 @@ function addHtmlPlucker(eleventyConfig, bundleManager) {
 					try {
 						// ignore
 						if(hasAttribute(node, ATTRS.ignore)) {
+							delete node.attrs[ATTRS.ignore];
 							return node;
 						}
 
