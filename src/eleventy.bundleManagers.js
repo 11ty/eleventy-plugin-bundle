@@ -22,38 +22,37 @@ function eleventyBundleManagers(eleventyConfig, pluginOptions = {}) {
 			debug("Bundle exists %o, skipping.", name);
 		} else {
 			debug("Creating new bundle %o", name);
-			let mgr = new CodeManager(name);
-			managers[name] = mgr;
+			managers[name] = new CodeManager(name);
 
 			if(bundleOptions.delayed !== undefined) {
-				mgr.setDelayed(bundleOptions.delayed);
+				managers[name].setDelayed(bundleOptions.delayed);
 			}
 
 			if(bundleOptions.hoist !== undefined) {
-				mgr.setHoisting(bundleOptions.hoist);
+				managers[name].setHoisting(bundleOptions.hoist);
 			}
 
 			if(bundleOptions.bundleHtmlContentFromSelector !== undefined) {
-				mgr.setPluckedSelector(bundleOptions.bundleHtmlContentFromSelector);
-				mgr.setDelayed(true); // must override `delayed` above
+				managers[name].setPluckedSelector(bundleOptions.bundleHtmlContentFromSelector);
+				managers[name].setDelayed(true); // must override `delayed` above
 
-				addHtmlPlucker(eleventyConfig, mgr);
+				addHtmlPlucker(eleventyConfig, managers[name]);
 			}
 
 			if(bundleOptions.bundleExportKey !== undefined) {
-				mgr.setBundleExportKey(bundleOptions.bundleExportKey);
+				managers[name].setBundleExportKey(bundleOptions.bundleExportKey);
 			}
 
 			if(bundleOptions.outputFileExtension) {
-				mgr.setFileExtension(bundleOptions.outputFileExtension);
+				managers[name].setFileExtension(bundleOptions.outputFileExtension);
 			}
 
 			if(bundleOptions.toFileDirectory) {
-				mgr.setBundleDirectory(bundleOptions.toFileDirectory);
+				managers[name].setBundleDirectory(bundleOptions.toFileDirectory);
 			}
 
 			if(bundleOptions.transforms) {
-				mgr.setTransforms(bundleOptions.transforms);
+				managers[name].setTransforms(bundleOptions.transforms);
 			}
 		}
 
