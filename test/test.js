@@ -453,3 +453,24 @@ test("config and configPath handles multiple addPlugin calls just fine", async t
 	let results = await elev.toJSON();
 	t.deepEqual(normalize(results[0].content), `<div></div>`)
 });
+
+test("<style> plucked into bundle", async t => {
+	let elev = new Eleventy("test/stubs/pluck-html-css/", "_site", {
+		configPath: "test/stubs/pluck-html-css/eleventy.config.js",
+	});
+
+	let results = await elev.toJSON();
+	t.deepEqual(normalize(results[0].content), `<div></div><style>* { color: red }
+body { color: blue }</style>`)
+});
+
+test("<script> plucked into bundle (and transforms)", async t => {
+	let elev = new Eleventy("test/stubs/pluck-html-js/", "_site", {
+		configPath: "test/stubs/pluck-html-js/eleventy.config.js",
+	});
+
+	let results = await elev.toJSON();
+	t.deepEqual(normalize(results[0].content), `<div></div><script>/* Banner from Transforms */
+/* Bundle one */
+/* Bundle two */</script>`)
+});

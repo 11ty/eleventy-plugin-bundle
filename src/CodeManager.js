@@ -22,6 +22,7 @@ class CodeManager {
 		this.toFileDirectory = undefined;
 		this.bundleExportKey = "bundle";
 		this.runsAfterHtmlTransformer = false;
+		this.pluckedSelector = undefined;
 	}
 
 	setDelayed(isDelayed) {
@@ -30,6 +31,15 @@ class CodeManager {
 
 	isDelayed() {
 		return this.runsAfterHtmlTransformer;
+	}
+
+	// posthtml-match-selector friendly
+	setPluckedSelector(selector) {
+		this.pluckedSelector = selector;
+	}
+
+	getPluckedSelector() {
+		return this.pluckedSelector;
 	}
 
 	setFileExtension(ext) {

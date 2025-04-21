@@ -1,6 +1,7 @@
 import { createRequire } from "node:module";
 import debugUtil from "debug";
 import { CodeManager } from "./CodeManager.js";
+import { addHtmlPlucker } from "./bundlePlucker.js"
 
 const require = createRequire(import.meta.url);
 const debug = debugUtil("Eleventy:Bundle");
@@ -21,30 +22,38 @@ function eleventyBundleManagers(eleventyConfig, pluginOptions = {}) {
 			debug("Bundle exists %o, skipping.", name);
 		} else {
 			debug("Creating new bundle %o", name);
-			managers[name] = new CodeManager(name);
+			let mgr = new CodeManager(name);
+			managers[name] = mgr;
 
 			if(bundleOptions.delayed !== undefined) {
-				managers[name].setDelayed(bundleOptions.delayed);
+				mgr.setDelayed(bundleOptions.delayed);
 			}
 
 			if(bundleOptions.hoist !== undefined) {
-				managers[name].setHoisting(bundleOptions.hoist);
+				mgr.setHoisting(bundleOptions.hoist);
+			}
+
+			if(bundleOptions.bundleHtmlContentFromSelector !== undefined) {
+				mgr.setPluckedSelector(bundleOptions.bundleHtmlContentFromSelector);
+				mgr.setDelayed(true); // must override `delayed` above
+
+				addHtmlPlucker(eleventyConfig, mgr);
 			}
 
 			if(bundleOptions.bundleExportKey !== undefined) {
-				managers[name].setBundleExportKey(bundleOptions.bundleExportKey);
+				mgr.setBundleExportKey(bundleOptions.bundleExportKey);
 			}
 
 			if(bundleOptions.outputFileExtension) {
-				managers[name].setFileExtension(bundleOptions.outputFileExtension);
+				mgr.setFileExtension(bundleOptions.outputFileExtension);
 			}
 
 			if(bundleOptions.toFileDirectory) {
-				managers[name].setBundleDirectory(bundleOptions.toFileDirectory);
+				mgr.setBundleDirectory(bundleOptions.toFileDirectory);
 			}
 
 			if(bundleOptions.transforms) {
-				managers[name].setTransforms(bundleOptions.transforms);
+				mgr.setTransforms(bundleOptions.transforms);
 			}
 		}
 
@@ -57,7 +66,7 @@ function eleventyBundleManagers(eleventyConfig, pluginOptions = {}) {
 			eleventyConfig.addPairedShortcode(shortcodeName, function addContent(content, bucket, explicitUrl) {
 				let url = explicitUrl || this.page?.url;
 				if(url) { // don’t add if a file doesn’t have an output URL
-					managers[name].addToPage(url, content, bucket);
+					mgr.addToPage(url, content, bucket);
 				}
 				return "";
 			});
