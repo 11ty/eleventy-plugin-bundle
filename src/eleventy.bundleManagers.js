@@ -66,7 +66,7 @@ function eleventyBundleManagers(eleventyConfig, pluginOptions = {}) {
 			eleventyConfig.addPairedShortcode(shortcodeName, function addContent(content, bucket, explicitUrl) {
 				let url = explicitUrl || this.page?.url;
 				if(url) { // don’t add if a file doesn’t have an output URL
-					mgr.addToPage(url, content, bucket);
+					managers[name].addToPage(url, content, bucket);
 				}
 				return "";
 			});
