@@ -53,9 +53,9 @@
 	"devDependencies": {
 		"@11ty/eleventy": "^3.0.0",
 		"ava": "^6.2.0",
-		"postcss": "^8.5.1",
+		"postcss": "^8.5.3",
 		"postcss-nested": "^7.0.2",
-		"sass": "^1.83.4"
+		"sass": "^1.86.3"
 	},
 	"dependencies": {
 		"debug": "^4.4.0",
