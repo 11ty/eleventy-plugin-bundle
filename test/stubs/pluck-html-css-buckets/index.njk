@@ -1,0 +1,1 @@
+<style>* { color: orange }</style><style eleventy:bucket="layer1">* { color: yellow }</style><style eleventy:bucket="layer2">* { color: red }</style><style eleventy:bucket="layer1">body { color: blue }</style><div></div><style>@layer layer1 { {% getBundle "css", "layer1" %} } @layer layer2 { {% getBundle "css", "layer2" %} } {% getBundle "css" %}</style>

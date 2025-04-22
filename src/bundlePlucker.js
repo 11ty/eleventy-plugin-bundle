@@ -4,7 +4,8 @@ import matchHelper from "posthtml-match-helper";
 const debug = debugUtil("Eleventy:Bundle");
 
 const ATTRS = {
-	ignore: "eleventy:ignore"
+	ignore: "eleventy:ignore",
+	bucket: "eleventy:bucket",
 };
 
 const POSTHTML_PLUGIN_NAME = "11ty/eleventy/html-bundle-plucker";
@@ -39,12 +40,13 @@ function addHtmlPlucker(eleventyConfig, bundleManager) {
 
 						if(Array.isArray(node?.content) && node.content.length > 0) {
 							// TODO make this better decoupled
-							if(node?.content.find(entry => entry.trim().startsWith(`/*__EleventyBundle:`))) {
+							if(node?.content.find(entry => entry.includes(`/*__EleventyBundle:`))) {
 								// preserve {% getBundle %} calls as-is
 								return node;
 							}
 
-							bundleManager.addToPage(pageUrl, [ ...node.content ]);
+							let bucketName = node?.attrs?.[ATTRS.bucket];
+							bundleManager.addToPage(pageUrl, [ ...node.content ], bucketName);
 
 							return { attrs: [], content: [], tag: false };
 						}

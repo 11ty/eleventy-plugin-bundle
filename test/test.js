@@ -474,3 +474,13 @@ test("<script> plucked into bundle (and transforms)", async t => {
 /* Bundle one */
 /* Bundle two */</script>`)
 });
+
+test("<style> plucked into bundle with buckets", async t => {
+	let elev = new Eleventy("test/stubs/pluck-html-css-buckets/", "_site", {
+		configPath: "test/stubs/pluck-html-css-buckets/eleventy.config.js",
+	});
+
+	let results = await elev.toJSON();
+	t.deepEqual(normalize(results[0].content), `<div></div><style>@layer layer1 { * { color: yellow }
+body { color: blue } } @layer layer2 { * { color: red } } * { color: orange }</style>`)
+});
