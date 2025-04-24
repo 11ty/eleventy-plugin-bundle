@@ -55,6 +55,7 @@
 		"sass": "^1.86.3"
 	},
 	"dependencies": {
+		"@11ty/eleventy-utils": "^2.0.2",
 		"debug": "^4.4.0",
 		"posthtml-match-helper": "^2.0.3"
 	}

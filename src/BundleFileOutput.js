@@ -1,7 +1,8 @@
 import fs from "node:fs";
 import path from "node:path";
-import { createHash } from "node:crypto";
 import debugUtil from "debug";
+
+import { createHash } from "@11ty/eleventy-utils";
 
 const debug = debugUtil("Eleventy:Bundle");
 
@@ -21,14 +22,12 @@ class BundleFileOutput {
 		this.fileExtension = ext;
 	}
 
-	getFilenameHash(content) {
+	async getFilenameHash(content) {
 		if(hashCache[content]) {
 			return hashCache[content];
 		}
 
-		let hash = createHash("sha256");
-		hash.update(content);
-		let base64hash = hash.digest('base64').replace(/=/g, "").replace(/\+/g, "-").replace(/\//g, "_");
+		let base64hash = await createHash(content);
 		let filenameHash = base64hash.substring(0, this.hashLength);
 		hashCache[content] = filenameHash;
 		return filenameHash;
@@ -42,14 +41,14 @@ class BundleFileOutput {
 		return "/" + path.join(dir, filename).split(path.sep).join("/");
 	}
 
-	writeBundle(content, type, writeToFileSystem) {
+	async writeBundle(content, type, writeToFileSystem) {
 		// do not write a bundle, do not return a file name is content is empty
 		if(!content) {
 			return;
 		}
 
 		let dir = path.join(this.outputDirectory, this.bundleDirectory);
-		let filenameHash = this.getFilenameHash(content);
+		let filenameHash = await this.getFilenameHash(content);
 		let filename = this.getFilename(filenameHash, this.fileExtension || type);
 
 		if(writeToFileSystem) {
