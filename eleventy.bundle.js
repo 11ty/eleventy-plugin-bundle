@@ -1,12 +1,9 @@
-import { createRequire } from "node:module";
 import bundleManagersPlugin from "./src/eleventy.bundleManagers.js";
 import pruneEmptyBundlesPlugin from "./src/eleventy.pruneEmptyBundles.js";
 import globalShortcodesAndTransforms from "./src/eleventy.shortcodes.js";
 import debugUtil from "debug";
 
-const require = createRequire(import.meta.url);
 const debug = debugUtil("Eleventy:Bundle");
-const pkg = require("./package.json");
 
 function normalizeOptions(options = {}) {
 	options = Object.assign({
@@ -32,7 +29,7 @@ function normalizeOptions(options = {}) {
 }
 
 function eleventyBundlePlugin(eleventyConfig, pluginOptions = {}) {
-	eleventyConfig.versionCheck(pkg["11ty"].compatibility);
+	eleventyConfig.versionCheck(">=3.0.0");
 	pluginOptions = normalizeOptions(pluginOptions);
 
 	let alreadyAdded = "getBundleManagers" in eleventyConfig || "addBundle" in eleventyConfig;
@@ -68,7 +65,7 @@ function eleventyBundlePlugin(eleventyConfig, pluginOptions = {}) {
 
 // This is used to find the package name for this plugin (used in eleventy-plugin-webc to prevent dupes)
 Object.defineProperty(eleventyBundlePlugin, "eleventyPackage", {
-	value: pkg.name
+	value: "@11ty/eleventy-plugin-bundle"
 });
 
 export default eleventyBundlePlugin;

@@ -1,17 +1,14 @@
-import { createRequire } from "node:module";
 import debugUtil from "debug";
 import { CodeManager } from "./CodeManager.js";
 import { addHtmlPlucker } from "./bundlePlucker.js"
 
-const require = createRequire(import.meta.url);
 const debug = debugUtil("Eleventy:Bundle");
-const pkg = require("../package.json");
 
 function eleventyBundleManagers(eleventyConfig, pluginOptions = {}) {
 	if(pluginOptions.force) {
 		// no errors
 	} else if(("getBundleManagers" in eleventyConfig || "addBundle" in eleventyConfig)) {
-		throw new Error("Duplicate addPlugin calls for " + pkg.name);
+		throw new Error("Duplicate addPlugin calls for @11ty/eleventy-plugin-bundle");
 	}
 
 	let managers = {};
