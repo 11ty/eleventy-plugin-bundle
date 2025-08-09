@@ -170,9 +170,9 @@ class CodeManager {
 		let result = new Set();
 		for(let subUrl of this.paginationPages[url]) {
 			if(!this.pages[subUrl]) { continue; }
-				for(let b of buckets) {
-					if(!this.pages[subUrl][b]) { continue; }
-					for(let entry of this.pages[subUrl][b]) {
+			for(let b of buckets) {
+				if(!this.pages[subUrl][b]) { continue; }
+				for(let entry of this.pages[subUrl][b]) {
 					result.add(entry);
 				}
 			}
