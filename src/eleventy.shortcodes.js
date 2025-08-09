@@ -56,6 +56,15 @@ function eleventyBundleShortcodes(eleventyConfig, pluginOptions = {}) {
 		if(url) {
 			pagesUsingBundles[url] = true;
 		}
+		let paginationUrls = (this?.ctx?.pagination?.items || []).
+													filter((i) => !!(i?.url)).
+													map((i) => i.url);
+		if(paginationUrls.length) {
+			paginationUrls.forEach((u) => {
+				pagesUsingBundles[u] = true;
+			})
+			managers[type].addPaginationUrls(url, paginationUrls);
+		}
 
 		return OutOfOrderRender.getAssetKey("get", type, bucket);
 	});
