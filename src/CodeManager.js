@@ -211,7 +211,7 @@ class CodeManager {
 
 		debug("Retrieving %o for %o (buckets: %o, entries: %o, size: %o)", this.name, url, buckets, set.size, size);
 		return set;
-  }
+	}
 
 	async getForPage(pageData, buckets = undefined) {
 		let set = this.getRawForPage(pageData, buckets);
