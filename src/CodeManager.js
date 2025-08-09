@@ -180,7 +180,8 @@ class CodeManager {
 		return result;
 	}
 
-	_getRawForPage(url, buckets = undefined) {
+	getRawForPage(pageData, buckets = undefined) {
+		let url = pageData.url;
 		// Merge data from pagination sub-pages.
 		if(this.paginationPages[url]) {
 			buckets = CodeManager.normalizeBuckets(buckets);
@@ -211,10 +212,6 @@ class CodeManager {
 		debug("Retrieving %o for %o (buckets: %o, entries: %o, size: %o)", this.name, url, buckets, set.size, size);
 		return set;
   }
-
-	getRawForPage(pageData, buckets = undefined) {
-		return this._getRawForPage(pageData.url, buckets);
-	}
 
 	async getForPage(pageData, buckets = undefined) {
 		let set = this.getRawForPage(pageData, buckets);
