@@ -1,6 +1,6 @@
 {
 	"name": "@11ty/eleventy-plugin-bundle",
-	"version": "3.0.6",
+	"version": "3.0.7",
 	"description": "Little bundles of code, little bundles of joy.",
 	"main": "eleventy.bundle.js",
 	"type": "module",
