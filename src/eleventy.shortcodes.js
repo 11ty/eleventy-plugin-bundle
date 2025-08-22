@@ -3,19 +3,14 @@ import debugUtil from "debug";
 
 const debug = debugUtil("Eleventy:Bundle");
 
-function eleventyBundleShortcodes(eleventyConfig, pluginOptions = {}) {
+export default function(eleventyConfig, pluginOptions = {}) {
 	let managers = eleventyConfig.getBundleManagers();
 	let writeToFileSystem = true;
-	let pagesUsingBundles = {};
 
 	function bundleTransform(content, stage = 0) {
-		if(typeof content !== "string") {
-			return content;
-		}
-
+		// Only run if content is string
 		// Only run if managers are in play
-		// Only run on pages that have fetched bundles via `getBundle` or `getBundleFileUrl`
-		if(Object.keys(managers).length === 0 || this.page.url && !pagesUsingBundles[this.page.url]) {
+		if(typeof content !== "string" || Object.keys(managers).length === 0) {
 			return content;
 		}
 
@@ -35,8 +30,6 @@ function eleventyBundleShortcodes(eleventyConfig, pluginOptions = {}) {
 		if(Object.keys(managers).length === 0) {
 			return;
 		}
-
-		pagesUsingBundles = {};
 
 		if(outputMode !== "fs") {
 			writeToFileSystem = false;
@@ -76,11 +69,6 @@ function eleventyBundleShortcodes(eleventyConfig, pluginOptions = {}) {
 			throw new Error(`Invalid bundle type: ${type}. Available options: ${Object.keys(managers)}`);
 		}
 
-		let url = explicitUrl || this.page?.url;
-		if(url) {
-			pagesUsingBundles[url] = true;
-		}
-
 		return OutOfOrderRender.getAssetKey("file", type, bucket);
 	});
 
@@ -107,5 +95,3 @@ function eleventyBundleShortcodes(eleventyConfig, pluginOptions = {}) {
 		});
 	});
 };
-
-export default eleventyBundleShortcodes;
