@@ -168,6 +168,8 @@ class CodeManager {
 
 	_getRawForPagination(url, buckets) {
 		let result = new Set();
+		buckets = CodeManager.normalizeBuckets(buckets);
+		// Merge data from pagination sub-pages.
 		for(let subUrl of this.paginationPages[url]) {
 			if(!this.pages[subUrl]) { continue; }
 			for(let b of buckets) {
@@ -182,9 +184,7 @@ class CodeManager {
 
 	getRawForPage(pageData, buckets = undefined) {
 		let url = pageData.url;
-		// Merge data from pagination sub-pages.
 		if(this.paginationPages[url]) {
-			buckets = CodeManager.normalizeBuckets(buckets);
 			return this._getRawForPagination(url, buckets);
 		}
 
