@@ -37,6 +37,8 @@ export default function(eleventyConfig, pluginOptions = {}) {
 		}
 	});
 
+  let pagesUsingBundles = {};
+
 	// e.g. `getBundle` shortcode to get code in current page bundle
 	// bucket can be an array
 	// This shortcode name is not configurable on purpose (for wider plugin compatibility)
