@@ -101,7 +101,6 @@ class CodeManager {
 		}
 	}
 
-
 	addToPage(pageUrl, code = [], bucket) {
 		if(!Array.isArray(code) && code) {
 			code = [code];

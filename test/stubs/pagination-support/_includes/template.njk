@@ -1,0 +1,5 @@
+{% getBundle "css" %}
+
+{%- for post in pagination.items -%}
+  {{ post.content | safe }}
+{%- endfor -%}
