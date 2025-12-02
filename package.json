@@ -49,14 +49,14 @@
 	},
 	"devDependencies": {
 		"@11ty/eleventy": "^3.0.0",
-		"ava": "^6.2.0",
-		"postcss": "^8.5.3",
+		"ava": "^6.4.1",
+		"postcss": "^8.5.6",
 		"postcss-nested": "^7.0.2",
-		"sass": "^1.86.3"
+		"sass": "^1.94.2"
 	},
 	"dependencies": {
 		"@11ty/eleventy-utils": "^2.0.2",
-		"debug": "^4.4.0",
+		"debug": "^4.4.3",
 		"posthtml-match-helper": "^2.0.3"
 	}
 }
