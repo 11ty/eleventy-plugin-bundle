@@ -64,6 +64,8 @@ class CodeManager {
 
 	reset() {
 		this.pages = {};
+		this.paginationPages = {};
+		this.paginationPages = {};
 	}
 
 	static normalizeBuckets(bucket) {
@@ -86,6 +88,16 @@ class CodeManager {
 	_initBucket(pageUrl, bucket) {
 		if(!this.pages[pageUrl][bucket]) {
 			this.pages[pageUrl][bucket] = new Set();
+		}
+	}
+
+	addPaginationUrls(url, subUrls = []) {
+		if(!subUrls.length) { return; }
+		if(!this.paginationPages[url]) {
+			this.paginationPages[url] = new Set();
+		}
+		for(let u of subUrls) {
+			this.paginationPages[url].add(u);
 		}
 	}
 
@@ -142,14 +154,56 @@ class CodeManager {
 
 	getBucketsForPage(pageData) {
 		let pageUrl = pageData.url;
+    if(this.paginationPages[pageUrl]) { // Merge
+      let result = new Set();
+      for(let url of this.paginationPages[pageUrl]) {
+        result = result.union(new Set(this.getBucketsForPage(url)));
+      }
+      return Array.from(result.entries());
+    }
 		if(!this.pages[pageUrl]) {
 			return [];
 		}
 		return Object.keys(this.pages[pageUrl]);
 	}
 
-	getRawForPage(pageData, buckets = undefined) {
-		let url = pageData.url;
+	_getRawForPagination(url, buckets) {
+		let result = new Set();
+		buckets = CodeManager.normalizeBuckets(buckets);
+		// Merge data from pagination sub-pages.
+		for(let subUrl of this.paginationPages[url]) {
+			if(!this.pages[subUrl]) { continue; }
+			for(let b of buckets) {
+				if(!this.pages[subUrl][b]) { continue; }
+				for(let entry of this.pages[subUrl][b]) {
+					result.add(entry);
+				}
+			}
+		}
+		return result;
+	}
+
+	_getRawForPagination(url, buckets) {
+		let result = new Set();
+		for(let subUrl of this.paginationPages[url]) {
+			if(!this.pages[subUrl]) { continue; }
+				for(let b of buckets) {
+					if(!this.pages[subUrl][b]) { continue; }
+					for(let entry of this.pages[subUrl][b]) {
+					result.add(entry);
+				}
+			}
+		}
+		return result;
+	}
+
+	_getRawForPage(url, buckets = undefined) {
+		// Merge data from pagination sub-pages.
+		if(this.paginationPages[url]) {
+			buckets = CodeManager.normalizeBuckets(buckets);
+			return this._getRawForPagination(url, buckets);
+		}
+
 		if(!this.pages[url]) {
 			debug("No bundle code found for %o on %o, %O", this.name, url, this.pages);
 			return new Set();
@@ -173,6 +227,10 @@ class CodeManager {
 
 		debug("Retrieving %o for %o (buckets: %o, entries: %o, size: %o)", this.name, url, buckets, set.size, size);
 		return set;
+  }
+
+	getRawForPage(pageData, buckets = undefined) {
+		return this._getRawForPage(pageData.url, buckets);
 	}
 
 	async getForPage(pageData, buckets = undefined) {
