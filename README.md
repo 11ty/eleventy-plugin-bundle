@@ -20,12 +20,15 @@ No installation necessary. Starting with Eleventy `v3.0.0-alpha.10` and newer, t
 
 ## Usage
 
-By default, Bundle Plugin v2.0 does not include any default bundles. You must add these yourself via `eleventyConfig.addBundle`. One notable exception happens when using the WebC Eleventy Plugin, which adds `css`, `js`, and `html` bundles for you.
+By default, Bundle Plugin v2.0 does not include any default bundles. You must add these yourself via `eleventyConfig.addBundle`. 
 
-To create a bundle type, use `eleventyConfig.addBundle` in your Eleventy configuration file (default `.eleventy.js`):
+> \[!NOTE]
+> One notable exception happens when using the WebC Eleventy Plugin, which adds `css`, `js`, and `html` bundles for you.
+
+To create a bundle type, use `eleventyConfig.addBundle` in your Eleventy configuration file (default `eleventy.config.js`):
 
 ```js
-// .eleventy.js
+// eleventy.config.js
 export default function(eleventyConfig) {
 	eleventyConfig.addBundle("css");
 };
@@ -128,7 +131,7 @@ Writes the bundle content to a content-hashed file location in your output direc
 <link rel="stylesheet" href="{% getBundleFileUrl "css" %}">
 ```
 
-Note that writing bundles to files will likely be slower for empty-cache first time visitors but better cached in the browser for repeat-views (and across multiple pages, too).
+> **NOTE:** Writing bundles to files will likely be slower for empty-cache first time visitors but better cached in the browser for repeat-views (and across multiple pages, too).
 
 ### Asset bucketing
 
@@ -160,7 +163,7 @@ A `default` bucket is implied:
 #### Critical CSS
 
 ```js
-// .eleventy.js
+// eleventy.config.js
 export default function(eleventyConfig) {
 	eleventyConfig.addBundle("css");
 };
@@ -201,7 +204,7 @@ _(Note that some HTML boilerplate has been omitted from the sample below)_
 Here an `svg` is bundle is created.
 
 ```js
-// .eleventy.js
+// eleventy.config.js
 export default function(eleventyConfig) {
 	eleventyConfig.addBundle("svg");
 };
@@ -228,7 +231,7 @@ And now you can use `icon-close` in as many SVG instances as you’d like (witho
 #### React Helmet-style `<head>` additions
 
 ```js
-// .eleventy.js
+// eleventy.config.js
 export default function(eleventyConfig) {
 	eleventyConfig.addBundle("html");
 };
