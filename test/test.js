@@ -484,3 +484,22 @@ test("<style> plucked into bundle with buckets", async t => {
 	t.deepEqual(normalize(results[0].content), `<div></div><style>@layer layer1 { * { color: yellow }
 body { color: blue } } @layer layer2 { * { color: red } } * { color: orange }</style>`)
 });
+
+
+test("Pagination support", async t => {
+	let elev = new Eleventy("test/stubs/pagination-support/", undefined, { 
+		configPath: "test/stubs/pagination-support/eleventy.config.js",
+		config: function(eleventyConfig) {
+			eleventyConfig.setQuietMode(true);
+		}
+	});
+	await elev.write();
+	t.deepEqual(
+			normalize(fs.readFileSync("_site/index.html", "utf8")), 
+			`<style>#foo { border: 1px solid blue; }</style>
+<style>#bar { border: 1px solid red; }</style><h1>First Post!!!!!</h1>
+<p><em>sigh</em></p>
+<h1>Second</h1>
+<p>Was this a good idea?</p>`
+	);
+});
