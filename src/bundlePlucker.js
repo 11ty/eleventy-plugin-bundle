@@ -4,6 +4,7 @@ import matchHelper from "posthtml-match-helper";
 const debug = debugUtil("Eleventy:Bundle");
 
 const ATTRS = {
+	// TODO buildawesome:
 	ignore: "eleventy:ignore",
 	bucket: "eleventy:bucket",
 };
@@ -40,7 +41,7 @@ function addHtmlPlucker(eleventyConfig, bundleManager) {
 
 						if(Array.isArray(node?.content) && node.content.length > 0) {
 							// TODO make this better decoupled
-							if(node?.content.find(entry => entry.includes(`/*__EleventyBundle:`))) {
+							if(node?.content.find(entry => entry.includes(`__EleventyBundle:`) || entry.includes(`#BaBundle:`))) {
 								// preserve {% getBundle %} calls as-is
 								return node;
 							}

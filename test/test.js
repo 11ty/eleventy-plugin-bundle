@@ -484,3 +484,21 @@ test("<style> plucked into bundle with buckets", async t => {
 	t.deepEqual(normalize(results[0].content), `<div></div><style>@layer layer1 { * { color: yellow }
 body { color: blue } } @layer layer2 { * { color: red } } * { color: orange }</style>`)
 });
+
+test("Markdown bundle in a markdown file, Issue #31", async t => {
+	let elev = new Eleventy("test/stubs-virtual/", "_site", {
+	config: function($config) {
+		$config.addPlugin(bundlePlugin);
+		$config.addPlugin(() => {
+			$config.addBundle("mybundle")
+		});
+
+		$config.addTemplate('index.md', `{% getBundle "mybundle" %}
+{% mybundle %}
+> Lorem ipsum dolor sit amet.
+{% endmybundle %}`)
+		}
+	});
+	let results = await elev.toJSON();
+	t.deepEqual(normalize(results[0].content), `> Lorem ipsum dolor sit amet.`)
+});

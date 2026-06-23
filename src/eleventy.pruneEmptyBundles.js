@@ -4,6 +4,7 @@ import debugUtil from "debug";
 const debug = debugUtil("Eleventy:Bundle");
 
 const ATTRS = {
+	// TODO buildawesome:
 	keep: "eleventy:keep"
 };
 

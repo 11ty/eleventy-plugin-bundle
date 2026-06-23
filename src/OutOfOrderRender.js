@@ -6,7 +6,8 @@ const debug = debugUtil("Eleventy:Bundle");
  * to allow `getBundle` to be called before all of the `css` additions have been processed
  */
 class OutOfOrderRender {
-	static SPLIT_REGEX = /(\/\*__EleventyBundle:[^:]*:[^:]*:[^:]*:EleventyBundle__\*\/)/;
+	#regex = /(\<\!\-\-#BaBundle:[^:]*:[^:]*:[^:]*:#BaBundle\-\-\>)/;
+
 	static SEPARATOR = ":";
 
 	constructor(content) {
@@ -22,11 +23,11 @@ class OutOfOrderRender {
 		} else {
 			bucket = "";
 		}
-		return `/*__EleventyBundle:${type}:${name}:${bucket || "default"}:EleventyBundle__*/`
+		return `<!--#BaBundle:${type}:${name}:${bucket || "default"}:#BaBundle-->`;
 	}
 
 	static parseAssetKey(str) {
-		if(str.startsWith("/*__EleventyBundle:")) {
+		if(str.startsWith("<!--#BaBundle:")) {
 			let [prefix, type, name, bucket, suffix] = str.split(OutOfOrderRender.SEPARATOR);
 			return { type, name, bucket };
 		}
@@ -42,12 +43,13 @@ class OutOfOrderRender {
 	}
 
 	normalizeMatch(match) {
-		let ret = OutOfOrderRender.parseAssetKey(match)
+		let ret = OutOfOrderRender.parseAssetKey(match);
 		return ret || match;
 	}
 
 	findAll() {
-		let matches = this.content.split(OutOfOrderRender.SPLIT_REGEX);
+		let regex = this.#regex;
+		let matches = this.content.split(regex);
 		let ret = [];
 		for(let match of matches) {
 			ret.push(this.normalizeMatch(match));
