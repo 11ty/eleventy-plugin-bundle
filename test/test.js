@@ -521,3 +521,29 @@ test("Pluck and empty bundles Issue #39", async t => {
 	t.deepEqual(normalize(results[0].content), `<!doctype html>`)
 });
 
+test.skip("<selectedcontent> Issue #40", async t => {
+	let elev = new Eleventy("test/stubs-virtual/", "_site", {
+	config: function($config) {
+		$config.addPlugin(bundlePlugin);
+		$config.addPlugin(() => {
+			$config.addBundle("css");
+		});
+
+		$config.addTemplate('index.html', `<!doctype html><select>
+<button><selectedcontent></selectedcontent></button>
+<option value="pokeball">Pokeball</option>
+<option value="greatball">Great ball</option>
+<option value="ultraball">Ultra ball</option>
+</select>`)
+		}
+	});
+
+	let results = await elev.toJSON();
+	t.deepEqual(normalize(results[0].content), `<!doctype html><select>
+<button><selectedcontent></selectedcontent></button>
+<option value="pokeball">Pokeball</option>
+<option value="greatball">Great ball</option>
+<option value="ultraball">Ultra ball</option>
+</select>`)
+});
+
