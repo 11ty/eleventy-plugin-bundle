@@ -386,8 +386,8 @@ test("Empty CSS bundle (trimmed) removes empty <link rel=stylesheet> tag", async
 	t.deepEqual(normalize(results[0].content), `<div></div>`)
 });
 
-// TODO this requires `htmlTransformer.remove` which is core v3.0.1-alpha.4+
-test.skip("Empty CSS bundle (trimmed) does *not* remove empty <style> tag (unskip after Eleventy v3.0.1+)", async t => {
+// This requires `htmlTransformer.remove` which is core v3.0.1-alpha.4+
+test("Empty CSS bundle (trimmed) does *not* remove empty <style> tag", async t => {
 	let elev = new Eleventy("test/stubs-virtual/", "_site", {
 		// See testing note at top of this file
 		configPath: "test/stubs/no-prune/eleventy.config.js",
@@ -396,8 +396,8 @@ test.skip("Empty CSS bundle (trimmed) does *not* remove empty <style> tag (unski
 	t.deepEqual(normalize(results[0].content), `<div></div><style></style>`)
 });
 
-// TODO this requires `htmlTransformer.remove` which is core v3.0.1-alpha.4+
-test.skip("Empty CSS bundle (trimmed) does *not* remove empty <style eleventy:keep> tag (unskip after Eleventy v3.0.1+)", async t => {
+// This requires `htmlTransformer.remove` which is core v3.0.1-alpha.4+
+test("Empty CSS bundle (trimmed) does *not* remove empty <style eleventy:keep> tag", async t => {
 	let elev = new Eleventy("test/stubs-virtual/", "_site", {
 		config: function(eleventyConfig) {
 			eleventyConfig.addPlugin(bundlePlugin);
