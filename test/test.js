@@ -205,7 +205,7 @@ test("toFile Filter (write files, out of order)", async t => {
 test("Bundle in Layout file", async t => {
 	let elev = new Eleventy("test/stubs/bundle-in-layout/", "_site", { configPath: "eleventy.bundle.js" });
 	let results = await elev.toJSON();
-	t.deepEqual(normalize(results[0].content), `<!doctype html><html><head><link href="https://v1.opengraph.11ty.dev" rel="preconnect" crossorigin=""></head></html>`);
+	t.deepEqual(normalize(results[0].content), `<!doctype html><html><head><link href="https://v1.opengraph.11ty.dev" rel="preconnect" crossorigin></head></html>`);
 });
 
 test("Bundle with render plugin", async t => {

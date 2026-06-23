@@ -48,7 +48,7 @@
 		}
 	},
 	"devDependencies": {
-		"@11ty/eleventy": "^3.0.0",
+		"@11ty/eleventy": "^4.0.0-0",
 		"ava": "^8.0.1",
 		"postcss": "^8.5.15",
 		"postcss-nested": "^7.0.2",
