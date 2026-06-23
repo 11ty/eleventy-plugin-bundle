@@ -502,3 +502,22 @@ test("Markdown bundle in a markdown file, Issue #31", async t => {
 	let results = await elev.toJSON();
 	t.deepEqual(normalize(results[0].content), `> Lorem ipsum dolor sit amet.`)
 });
+
+test("Pluck and empty bundles Issue #39", async t => {
+	let elev = new Eleventy("test/stubs-virtual/", "_site", {
+	config: function($config) {
+		$config.addPlugin(bundlePlugin);
+		$config.addPlugin(() => {
+			$config.addBundle("css", {
+				bundleHtmlContentFromSelector: "style",
+			});
+		});
+
+		$config.addTemplate('index.liquid', `<!doctype html><link href="{% getBundleFileUrl "css" %}" rel="stylesheet">`)
+		}
+	});
+
+	let results = await elev.toJSON();
+	t.deepEqual(normalize(results[0].content), `<!doctype html>`)
+});
+

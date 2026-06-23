@@ -5,8 +5,8 @@ const debug = createDebug("Eleventy:Bundle");
 /* This class defers any `bundleGet` calls to a post-build transform step,
  * to allow `getBundle` to be called before all of the `css` additions have been processed
  */
-class OutOfOrderRender {
-	#regex = /(\<\!\-\-#BaBundle:[^:]*:[^:]*:[^:]*:#BaBundle\-\-\>)/;
+export class OutOfOrderRender {
+	#regex = /((?:\<\!\-\-)#BaBundle:[^:]*:[^:]*:[^:]*:BaBundle#(?:\-\-\>))/;
 
 	static SEPARATOR = ":";
 
@@ -23,11 +23,11 @@ class OutOfOrderRender {
 		} else {
 			bucket = "";
 		}
-		return `<!--#BaBundle:${type}:${name}:${bucket || "default"}:#BaBundle-->`;
+		return `<!--#BaBundle:${type}:${name}:${bucket || "default"}:BaBundle#-->`;
 	}
 
 	static parseAssetKey(str) {
-		if(str.startsWith("<!--#BaBundle:")) {
+		if(str.startsWith("#BaBundle:") || str.startsWith("<!--#BaBundle:")) {
 			let [prefix, type, name, bucket, suffix] = str.split(OutOfOrderRender.SEPARATOR);
 			return { type, name, bucket };
 		}
@@ -127,7 +127,6 @@ class OutOfOrderRender {
 
 			let {type, name, bucket} = match;
 			let manager = this.getManager(name);
-
 			// Quit early if in stage 0, run delayed replacements if in stage 1+
 			if(typeof manager.isDelayed === "function" && manager.isDelayed() && stage === 0) {
 				return OutOfOrderRender.getAssetKey(type, name, bucket);
@@ -143,6 +142,7 @@ class OutOfOrderRender {
 					write: this.writeToFileSystem,
 				});
 			}
+
 			return "";
 		}));
 
@@ -156,5 +156,3 @@ class OutOfOrderRender {
 		return content.join("");
 	}
 }
-
-export { OutOfOrderRender };

@@ -148,6 +148,7 @@ class CodeManager {
 		return Object.keys(this.pages[pageUrl]);
 	}
 
+	// Without Bundle Transforms
 	getRawForPage(pageData, buckets = undefined) {
 		let url = pageData.url;
 		if(!this.pages[url]) {
@@ -175,6 +176,7 @@ class CodeManager {
 		return set;
 	}
 
+	// With Bundle Transforms
 	async getForPage(pageData, buckets = undefined) {
 		let set = this.getRawForPage(pageData, buckets);
 		let bundleContent = Array.from(set).join("\n");

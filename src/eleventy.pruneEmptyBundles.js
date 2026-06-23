@@ -1,5 +1,7 @@
-import matchHelper from "posthtml-match-helper";
 import { createDebug } from "obug";
+import matchHelper from "posthtml-match-helper";
+
+import { OutOfOrderRender } from "./OutOfOrderRender.js"
 
 const debug = createDebug("Eleventy:Bundle");
 
@@ -28,7 +30,27 @@ function getTextNodeContent(node) {
 		.join("");
 }
 
-function eleventyPruneEmptyBundles(eleventyConfig, options = {}) {
+function hasEmptyBundle(bundleAssetKey, context, bundleManagers) {
+	if(!bundleAssetKey) {
+		// not a bundle
+		return false;
+	}
+	let parsed = OutOfOrderRender.parseAssetKey(bundleAssetKey);
+	if(!parsed) {
+		// not a bundle
+		return false;
+	}
+
+	let { name, bucket } = parsed;
+	if(bundleManagers?.[name]?.getRawForPage(context, [bucket]).size === 0) {
+		// is a bundle and is empty
+		return true;
+	}
+
+	return false;
+}
+
+export default function eleventyPruneEmptyBundles(eleventyConfig, options = {}) {
 	// Right now script[src],link[rel="stylesheet"] nodes are removed if the final bundles are empty.
 	// `false` to disable
 	options.pruneEmptySelector = options.pruneEmptySelector ?? `style,script,link[rel="stylesheet"]`;
@@ -59,9 +81,16 @@ function eleventyPruneEmptyBundles(eleventyConfig, options = {}) {
 
 	eleventyConfig.htmlTransformer.addPosthtmlPlugin(
 		"html",
-		function bundlePruneEmptyPosthtmlPlugin(pluginOptions = {}) {
+		function bundlePruneEmptyPosthtmlPlugin(context = {}) {
+			let pageUrl = context?.url;
+			if(!pageUrl) {
+				throw new Error("Internal error: missing `url` property from context.");
+			}
+
 			return function (tree) {
+				let managers = eleventyConfig.getBundleManagers();
 				tree.match(matchHelper(options.pruneEmptySelector), function (node) {
+
 					if(node.attrs && node.attrs[ATTRS.keep] !== undefined) {
 						delete node.attrs[ATTRS.keep];
 						return node;
@@ -69,20 +98,30 @@ function eleventyPruneEmptyBundles(eleventyConfig, options = {}) {
 
 					// <link rel="stylesheet" href="">
 					if(node.tag === "link") {
-						if(node.attrs?.rel === "stylesheet" && (node.attrs?.href || "").trim().length === 0) {
-							return false;
-						}
-					} else {
-						let content = getTextNodeContent(node);
-
-						if(!content) {
-							// <script></script> or <script src=""></script>
-							if(node.tag === "script" && (node.attrs?.src || "").trim().length === 0) {
+						if(node.attrs?.rel === "stylesheet") {
+							if((node.attrs?.href || "").trim().length === 0 || hasEmptyBundle(node.attrs?.href, context, managers)) {
 								return false;
 							}
+						}
+					} else {
+						if(node.tag === "script" && typeof node.attrs?.src === "string") {
+							// <script src=""> (node may or may not be empty)
+							if(node.attrs.src.trim().length === 0 || hasEmptyBundle(node.attrs.src, context, managers)) {
+								return false;
+							}
+						}
 
-							// <style></style>
-							if(node.tag === "style") {
+						let content = getTextNodeContent(node);
+						if(node.tag === "script") {
+							// <script></script> or <script>EMPTY BUNDLE ASSET KEY</script>
+							if(!content || hasEmptyBundle(content, context, managers)) {
+								return false;
+							}
+						}
+
+						if(node.tag === "style") {
+							// <style></style> or <style>EMPTY BUNDLE ASSET KEY</style>
+							if(!content || hasEmptyBundle(content, context, managers)) {
 								return false;
 							}
 						}
@@ -95,6 +134,10 @@ function eleventyPruneEmptyBundles(eleventyConfig, options = {}) {
 		},
 		{
 			name: POSTHTML_PLUGIN_NAME,
+
+			// needs to run *after* bundle plucker
+			priority: -1,
+
 			// the `enabled` callback for plugins is available on v3.0.0-alpha.20+ and v3.0.0-beta.2+
 			enabled: () => {
 				return Object.keys(eleventyConfig.getBundleManagers()).length > 0;
@@ -102,5 +145,3 @@ function eleventyPruneEmptyBundles(eleventyConfig, options = {}) {
 		}
 	);
 }
-
-export default eleventyPruneEmptyBundles;

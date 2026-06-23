@@ -15,7 +15,7 @@ function hasAttribute(node, name) {
 	return node?.attrs?.[name] !== undefined;
 }
 
-function addHtmlPlucker(eleventyConfig, bundleManager) {
+export function addHtmlPlucker(eleventyConfig, bundleManager) {
 	let matchSelector = bundleManager.getPluckedSelector();
 
 	if(!matchSelector) {
@@ -30,7 +30,7 @@ function addHtmlPlucker(eleventyConfig, bundleManager) {
 				throw new Error("Internal error: missing `url` property from context.");
 			}
 
-			return function (tree, ...args) {
+			return function (tree) {
 				tree.match(matchHelper(matchSelector), function (node) {
 					try {
 						// ignore
@@ -55,7 +55,6 @@ function addHtmlPlucker(eleventyConfig, bundleManager) {
 						debug(`Bundle plucker: error adding content to bundle in HTML Assets: %o`, e);
 						return node;
 					}
-
 					return node;
 				});
 			};
@@ -63,8 +62,14 @@ function addHtmlPlucker(eleventyConfig, bundleManager) {
 		{
 			// pluginOptions
 			name: POSTHTML_PLUGIN_NAME,
+
+			// needs to run before prune empty bundles, which has priority -1
+			// priority: 0,
+
+			// the `enabled` callback for plugins is available on v3.0.0-alpha.20+ and v3.0.0-beta.2+
+			enabled: () => {
+				return Object.keys(eleventyConfig.getBundleManagers()).length > 0;
+			}
 		},
 	);
 }
-
-export { addHtmlPlucker };

@@ -59,10 +59,10 @@ export default function(eleventyConfig, pluginOptions = {}) {
 	});
 
 	eleventyConfig.addTransform("@11ty/eleventy-bundle", function (content) {
-		let hasNonDelayedManagers = Boolean(Object.values(eleventyConfig.getBundleManagers()).find(manager => {
+		let nonDelayedManagers = Object.values(eleventyConfig.getBundleManagers()).find(manager => {
 			return typeof manager.isDelayed !== "function" || !manager.isDelayed();
-		}));
-		if(hasNonDelayedManagers) {
+		});
+		if(Boolean(nonDelayedManagers)) {
 			return bundleTransform.call(this, content, 0);
 		}
 		return content;
@@ -71,10 +71,10 @@ export default function(eleventyConfig, pluginOptions = {}) {
 	eleventyConfig.addPlugin((eleventyConfig) => {
 		// Delayed bundles *MUST* not alter URLs
 		eleventyConfig.addTransform("@11ty/eleventy-bundle/delayed", function (content) {
-			let hasDelayedManagers = Boolean(Object.values(eleventyConfig.getBundleManagers()).find(manager => {
+			let delayedManagers = Object.values(eleventyConfig.getBundleManagers()).find(manager => {
 				return typeof manager.isDelayed === "function" && manager.isDelayed();
-			}));
-			if(hasDelayedManagers) {
+			});
+			if(Boolean(delayedManagers)) {
 				return bundleTransform.call(this, content, 1);
 			}
 			return content;
