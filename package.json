@@ -1,6 +1,6 @@
 {
 	"name": "@11ty/eleventy-plugin-bundle",
-	"version": "3.0.7",
+	"version": "4.0.0",
 	"description": "Little bundles of code, little bundles of joy.",
 	"main": "eleventy.bundle.js",
 	"type": "module",
@@ -13,7 +13,7 @@
 	},
 	"license": "MIT",
 	"engines": {
-		"node": ">=18"
+		"node": ">=22"
 	},
 	"funding": {
 		"type": "opencollective",
@@ -49,7 +49,7 @@
 	},
 	"devDependencies": {
 		"@11ty/eleventy": "^3.0.0",
-		"ava": "^6.4.1",
+		"ava": "^8.0.1",
 		"postcss": "^8.5.15",
 		"postcss-nested": "^7.0.2",
 		"sass": "^1.101.0"

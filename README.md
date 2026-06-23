@@ -16,11 +16,11 @@ But do note that a full-featured bundler has a significant build performance cos
 
 ## Installation
 
-No installation necessary. Starting with Eleventy `v3.0.0-alpha.10` and newer, this plugin is now bundled with Eleventy.
+No installation necessary. Starting with Eleventy core `v3.0.0` and newer, this plugin is now bundled with Eleventy.
 
 ## Usage
 
-By default, Bundle Plugin v2.0 does not include any default bundles. You must add these yourself via `eleventyConfig.addBundle`. 
+By default, Bundle Plugin v2.0 does not include any default bundles. You must add these yourself via `eleventyConfig.addBundle`.
 
 > \[!NOTE]
 > One notable exception happens when using the WebC Eleventy Plugin, which adds `css`, `js`, and `html` bundles for you.
