@@ -177,6 +177,33 @@ test("toFile Filter (write files)", async t => {
 	t.false(fs.existsSync("_site/bundle/Es4dSlOfrv.css"));
 });
 
+test("toFile Filter (write files, deep output dir, issue #4)", async t => {
+	let elev = new Eleventy("test/stubs/to-file-write/", "test/stubs/to-file-write/_site", {
+		configPath: "eleventy.bundle.js",
+		config: function(eleventyConfig) {
+			eleventyConfig.setQuietMode(true);
+		}
+	});
+
+	await elev.write();
+
+	t.is(normalize(fs.readFileSync("test/stubs/to-file-write/_site/to-file-write/index.html", "utf8")), `<style>* { color: blue; }
+* { color: red; }
+* { color: orange; }/* lololol2 */</style>
+<link rel="stylesheet" href="/bundle/Es4dSlOfrv.css">`); // note that blue is only listed once, we de-dupe entries across buckets
+
+	// does write to the file system because of `write` usage above.
+	t.is(normalize(fs.readFileSync("test/stubs/to-file-write/_site/bundle/Es4dSlOfrv.css", "utf8")), `* { color: blue; }
+* { color: red; }
+* { color: orange; }/* lololol2 */`);
+
+	fs.unlinkSync("test/stubs/to-file-write/_site/to-file-write/index.html");
+	fs.unlinkSync("test/stubs/to-file-write/_site/bundle/Es4dSlOfrv.css");
+
+	t.false(fs.existsSync("test/stubs/to-file-write/_site/to-file-write/index.html"));
+	t.false(fs.existsSync("test/stubs/to-file-write/_site/bundle/Es4dSlOfrv.css"));
+});
+
 test("toFile Filter (write files, out of order)", async t => {
 	let elev = new Eleventy("test/stubs/to-file-ordering/", undefined, {
 		configPath: "eleventy.bundle.js",
