@@ -1,10 +1,10 @@
 import fs from "node:fs";
 import path from "node:path";
-import debugUtil from "debug";
+import { createDebug } from "obug";
 
 import { createHash } from "@11ty/eleventy-utils";
 
-const debug = debugUtil("Eleventy:Bundle");
+const debug = createDebug("Eleventy:Bundle");
 
 const hashCache = {};
 const directoryExistsCache = {};

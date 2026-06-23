@@ -1,7 +1,7 @@
 import { OutOfOrderRender } from "./OutOfOrderRender.js";
-import debugUtil from "debug";
+import { createDebug } from "obug";
 
-const debug = debugUtil("Eleventy:Bundle");
+const debug = createDebug("Eleventy:Bundle");
 
 export default function(eleventyConfig, pluginOptions = {}) {
 	let managers = eleventyConfig.getBundleManagers();

@@ -1,7 +1,7 @@
+import { createDebug } from "obug";
 import { BundleFileOutput } from "./BundleFileOutput.js";
-import debugUtil from "debug";
 
-const debug = debugUtil("Eleventy:Bundle");
+const debug = createDebug("Eleventy:Bundle");
 const DEBUG_LOG_TRUNCATION_SIZE = 200;
 
 class CodeManager {

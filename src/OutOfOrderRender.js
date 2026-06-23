@@ -1,6 +1,6 @@
-import debugUtil from "debug";
+import { createDebug } from "obug";
 
-const debug = debugUtil("Eleventy:Bundle");
+const debug = createDebug("Eleventy:Bundle");
 
 /* This class defers any `bundleGet` calls to a post-build transform step,
  * to allow `getBundle` to be called before all of the `css` additions have been processed

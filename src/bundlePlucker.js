@@ -1,7 +1,7 @@
-import debugUtil from "debug";
+import { createDebug } from "obug";
 import matchHelper from "posthtml-match-helper";
 
-const debug = debugUtil("Eleventy:Bundle");
+const debug = createDebug("Eleventy:Bundle");
 
 const ATTRS = {
 	// TODO buildawesome:

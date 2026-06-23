@@ -1,8 +1,8 @@
-import debugUtil from "debug";
+import { createDebug } from "obug";
 import { CodeManager } from "./CodeManager.js";
 import { addHtmlPlucker } from "./bundlePlucker.js"
 
-const debug = debugUtil("Eleventy:Bundle");
+const debug = createDebug("Eleventy:Bundle");
 
 function eleventyBundleManagers(eleventyConfig, pluginOptions = {}) {
 	if(pluginOptions.force) {

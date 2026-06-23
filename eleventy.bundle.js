@@ -1,9 +1,9 @@
 import bundleManagersPlugin from "./src/eleventy.bundleManagers.js";
 import pruneEmptyBundlesPlugin from "./src/eleventy.pruneEmptyBundles.js";
 import globalShortcodesAndTransforms from "./src/eleventy.shortcodes.js";
-import debugUtil from "debug";
+import { createDebug } from "obug";
 
-const debug = debugUtil("Eleventy:Bundle");
+const debug = createDebug("Eleventy:Bundle");
 
 function normalizeOptions(options = {}) {
 	options = Object.assign({
