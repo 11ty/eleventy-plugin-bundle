@@ -574,3 +574,56 @@ test.skip("<selectedcontent> Issue #40", async t => {
 </select>`)
 });
 
+test("Pagination bundles plucked, Issue #37", async (t) => {
+  let elev = new Eleventy("./test/stubs-virtual/", undefined, {
+    config: $config => {
+      $config.addPlugin(() => {
+        $config.addBundle("css", {
+          bundleHtmlContentFromSelector: "style",
+        });
+      });
+
+      $config.addTemplate("paged.njk", `---
+pagination:
+  data: collections.all
+  size: 2
+  alias: posts
+layout: "layout.njk"
+---
+Paged<style>* { color: blue }</style>{% for post in posts %}{{ post.content | safe }}{% endfor %}`);
+
+      $config.addTemplate("index.njk", "Index<style>* { color: red }</style>", { layout: "layout.njk" });
+      $config.addTemplate("_includes/layout.njk", `{{ content | safe }}<style>{% getBundle "css" %}</style>`);
+    }
+  });
+
+  let results = await elev.toJSON();
+  t.is(results.length, 2);
+  t.is(results[0].inputPath, `./test/stubs-virtual/paged.njk`);
+  t.is(results[0].content, `PagedIndex<style>* { color: blue }
+* { color: red }</style>`);
+
+  t.is(results[1].inputPath, `./test/stubs-virtual/index.njk`);
+  t.is(results[1].content, `Index<style>* { color: red }</style>`);
+});
+
+test("getBundle and 11ty.js Issue #26", async (t) => {
+  let elev = new Eleventy("./test/stubs-virtual/", undefined, {
+    config: $config => {
+      $config.addPlugin(() => {
+        $config.addBundle("css", {
+          bundleHtmlContentFromSelector: "style",
+        });
+      });
+
+      $config.addTemplate("index.11ty.js", function() {
+				return `Index<style>* { color: red }</style><style>/* Generated Bundle */${this.getBundle("css")}</style>`;
+			});
+    }
+  });
+
+  let results = await elev.toJSON();
+  t.is(results.length, 1);
+  t.is(results[0].content, `Index<style>/* Generated Bundle */* { color: red }</style>`);
+});
+
