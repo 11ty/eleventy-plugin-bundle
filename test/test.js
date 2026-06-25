@@ -337,11 +337,15 @@ test("Bundle in Layout file", async t => {
 
 test("Bundle with render plugin", async t => {
   let elev = new Eleventy("test/stubs/bundle-render/", undefined, {
-    configPath: "src/BundlePlugin.js",
-    config: function(eleventyConfig) {
-      eleventyConfig.addPlugin(RenderPlugin);
+    config: function($config) {
+			// see testing note at the top of this file
+      $config.on("eleventy.beforeConfig", () => {
+        $config.addPlugin(bundlePlugin, { force: true, immediate: true });
+      });
 
-      eleventyConfig.addExtension("scss", {
+      $config.addPlugin(RenderPlugin);
+
+      $config.addExtension("scss", {
         outputFileExtension: "css",
 
         compile: async function(inputContent) {
@@ -412,7 +416,12 @@ test("Use Transforms on specific bundle type", async t => {
 
 test("Output `defer` bucket multiple times (hoisting disabled)", async t => {
   let elev = new Eleventy("test/stubs/output-same-bucket-multiple-times-nohoist/", undefined, {
-    configPath: "src/BundlePlugin.js"
+		config: $config => {
+    	// see testing note at the top of this file
+      $config.on("eleventy.beforeConfig", () => {
+        $config.addPlugin(bundlePlugin, { force: true, immediate: true });
+      });
+		}
   });
 
   let results = await elev.toJSON();
