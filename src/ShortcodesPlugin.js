@@ -3,8 +3,8 @@ import { createDebug } from "obug";
 
 const debug = createDebug("Eleventy:Bundle");
 
-export default function(eleventyConfig, pluginOptions = {}) {
-	let managers = eleventyConfig.getBundleManagers();
+export default function($config, pluginOptions = {}) {
+	let managers = $config.getBundleManagers();
 	let writeToFileSystem = true;
 
 	function bundleTransform(content, stage = 0) {
@@ -14,19 +14,18 @@ export default function(eleventyConfig, pluginOptions = {}) {
 			return content;
 		}
 
-		debug("Processing %o", this.page.url);
 		let render = new OutOfOrderRender(content);
 		for(let key in managers) {
 			render.setAssetManager(key, managers[key]);
 		}
 
-		render.setOutputDirectory(eleventyConfig.directories.output);
+		render.setOutputDirectory($config.directories.output);
 		render.setWriteToFileSystem(writeToFileSystem);
 
 		return render.replaceAll(this.page, stage);
 	}
 
-	eleventyConfig.on("eleventy.before", async ({ outputMode }) => {
+	$config.on("eleventy.before", async ({ outputMode }) => {
 		if(Object.keys(managers).length === 0) {
 			return;
 		}
@@ -40,7 +39,7 @@ export default function(eleventyConfig, pluginOptions = {}) {
 	// e.g. `getBundle` shortcode to get code in current page bundle
 	// bucket can be an array
 	// This shortcode name is not configurable on purpose (for wider plugin compatibility)
-	eleventyConfig.addShortcode("getBundle", function getContent(type, bucket, explicitUrl) {
+	$config.addShortcode("getBundle", function getContent(type, bucket, explicitUrl) {
 		if(!type || !(type in managers) || Object.keys(managers).length === 0) {
 			throw new Error(`Invalid bundle type: ${type}. Available options: ${Object.keys(managers)}`);
 		}
@@ -50,7 +49,7 @@ export default function(eleventyConfig, pluginOptions = {}) {
 
 	// write a bundle to the file system
 	// This shortcode name is not configurable on purpose (for wider plugin compatibility)
-	eleventyConfig.addShortcode("getBundleFileUrl", function(type, bucket, explicitUrl) {
+	$config.addShortcode("getBundleFileUrl", function(type, bucket, explicitUrl) {
 		if(!type || !(type in managers) || Object.keys(managers).length === 0) {
 			throw new Error(`Invalid bundle type: ${type}. Available options: ${Object.keys(managers)}`);
 		}
@@ -58,23 +57,26 @@ export default function(eleventyConfig, pluginOptions = {}) {
 		return OutOfOrderRender.getAssetKey("file", type, bucket);
 	});
 
-	eleventyConfig.addTransform("@11ty/eleventy-bundle", function (content) {
-		let nonDelayedManagers = Object.values(eleventyConfig.getBundleManagers()).find(manager => {
+	$config.addTransform("@11ty/eleventy-bundle", function (content) {
+		let managers = $config.getBundleManagers();
+		let nonDelayedManager = Object.values(managers).find(manager => {
 			return typeof manager.isDelayed !== "function" || !manager.isDelayed();
 		});
-		if(Boolean(nonDelayedManagers)) {
+		if(Boolean(nonDelayedManager)) {
 			return bundleTransform.call(this, content, 0);
 		}
 		return content;
 	});
 
-	eleventyConfig.addPlugin((eleventyConfig) => {
+	// We use addplugin here so the delayed transform adds after the HTML Transformer API
+	$config.addPlugin(($config) => {
 		// Delayed bundles *MUST* not alter URLs
-		eleventyConfig.addTransform("@11ty/eleventy-bundle/delayed", function (content) {
-			let delayedManagers = Object.values(eleventyConfig.getBundleManagers()).find(manager => {
+		$config.addTransform("@11ty/eleventy-bundle/delayed", function (content) {
+			let managers = $config.getBundleManagers();
+			let delayedManager = Object.values(managers).find(manager => {
 				return typeof manager.isDelayed === "function" && manager.isDelayed();
 			});
-			if(Boolean(delayedManagers)) {
+			if(Boolean(delayedManager)) {
 				return bundleTransform.call(this, content, 1);
 			}
 			return content;

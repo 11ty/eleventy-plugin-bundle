@@ -1,4 +1,4 @@
-import bundlePlugin from "../../../eleventy.bundle.js";
+import bundlePlugin from "../../../src/BundlePlugin.js";
 import postcss from 'postcss';
 import postcssNested from 'postcss-nested';
 

@@ -2,7 +2,10 @@ import test from "ava";
 import fs from "fs";
 import Eleventy, { RenderPlugin } from "@11ty/eleventy";
 import * as sass from "sass";
-import bundlePlugin from "../eleventy.bundle.js";
+import bundlePlugin, { Bundle } from "../src/BundlePlugin.js";
+
+// Use this when core v4.0.0-alpha.9 is released
+// process.env.ELEVENTY_SKIP_BUNDLE_PLUGIN = true;
 
 // Special testing notes regarding overriding the bundled-with-core Bundle Plugin and using the Bundle Plugin from this repo:
 // Options: use a `configPath` with `force: true`
@@ -10,14 +13,14 @@ import bundlePlugin from "../eleventy.bundle.js";
 
 // Configuration order of execution:
 // 1. `config` callback
-// 2. `defaultConfig.js` file from core repo
+// 2. `defaultConfig.js` file from core repo (adds bundle plugin included with core)
 // 3. `configPath` file
 
 // eleventy.beforeConfig event approach:
 // If you want to use a `config` callback to overwrite the built-in Bundle Plugin, use this pattern instead:
-// config: function(eleventyConfig) {
-// 	eleventyConfig.on("eleventy.beforeConfig", () => {
-// 		eleventyConfig.addPlugin(bundlePlugin, {
+// config: function($config) {
+// 	$config.on("eleventy.beforeConfig", () => {
+// 		$config.addPlugin(bundlePlugin, {
 // 			immediate: true,
 // 			force: true,
 // 		});
@@ -25,16 +28,25 @@ import bundlePlugin from "../eleventy.bundle.js";
 // }
 
 function normalize(str) {
-	if(typeof str !== "string") {
-		throw new Error("Could not find content: " + str);
-	}
+  if(typeof str !== "string") {
+    throw new Error("Could not find content: " + str);
+  }
   return str.trim().replace(/\r\n/g, "\n");
 }
 
 test("CSS (Nunjucks)", async t => {
-	let elev = new Eleventy("test/stubs/nunjucks/", "_site", { configPath: "eleventy.bundle.js" });
-	let results = await elev.toJSON();
-	t.deepEqual(normalize(results[0].content), `<style>* { color: blue; }
+  let elev = new Eleventy("test/stubs/nunjucks/", "_site", {
+    config: $config => {
+      // see testing note at the top of this file
+      $config.on("eleventy.beforeConfig", () => {
+        // runs after bundler included with core
+        $config.addPlugin(bundlePlugin, { force: true, immediate: true });
+      });
+    }
+  });
+
+  let results = await elev.toJSON();
+  t.deepEqual(normalize(results[0].content), `<style>* { color: blue; }
 * { color: red; }
 * { color: orange; }</style>
 <style>* { color: blue; }
@@ -46,9 +58,16 @@ test("CSS (Nunjucks)", async t => {
 });
 
 test("CSS (Liquid)", async t => {
-	let elev = new Eleventy("test/stubs/liquid/", "_site", { configPath: "eleventy.bundle.js" });
-	let results = await elev.toJSON();
-	t.deepEqual(normalize(results[0].content), `<style>* { color: blue; }
+  let elev = new Eleventy("test/stubs/liquid/", "_site", {
+    config: $config => {
+      // see testing note at the top of this file
+      $config.on("eleventy.beforeConfig", () => {
+        $config.addPlugin(bundlePlugin, { force: true, immediate: true });
+      });
+    }
+  });
+  let results = await elev.toJSON();
+  t.deepEqual(normalize(results[0].content), `<style>* { color: blue; }
 * { color: red; }
 * { color: orange; }</style>
 <style>* { color: blue; }
@@ -60,9 +79,16 @@ test("CSS (Liquid)", async t => {
 });
 
 test("CSS (Markdown)", async t => {
-	let elev = new Eleventy("test/stubs/markdown/", "_site", { configPath: "eleventy.bundle.js" });
-	let results = await elev.toJSON();
-	t.deepEqual(normalize(results[0].content), `<style>* { color: blue; }
+  let elev = new Eleventy("test/stubs/markdown/", "_site", {
+    config: $config => {
+      // see testing note at the top of this file
+      $config.on("eleventy.beforeConfig", () => {
+        $config.addPlugin(bundlePlugin, { force: true, immediate: true });
+      });
+    }
+  });
+  let results = await elev.toJSON();
+  t.deepEqual(normalize(results[0].content), `<style>* { color: blue; }
 * { color: red; }
 * { color: orange; }</style>
 <style>* { color: blue; }
@@ -74,17 +100,31 @@ test("CSS (Markdown)", async t => {
 });
 
 test("SVG", async t => {
-	let elev = new Eleventy("test/stubs/nunjucks-svg/", "_site", { configPath: "eleventy.bundle.js" });
-	let results = await elev.toJSON();
-	t.deepEqual(normalize(results[0].content), `<svg width="0" height="0" aria-hidden="true" style="position: absolute;">
-	<defs><g id="icon-close-legacy"><path d="M8,15 C4.13400675,15 1,11.8659932 1,8 C1,4.13400675 4.13400675,1 8,1 C11.8659932,1 15,4.13400675 15,8 C15,11.8659932 11.8659932,15 8,15 Z M10.44352,10.7233105 L10.4528296,10.7326201 L10.7326201,10.4528296 C11.0310632,10.1543865 11.0314986,9.66985171 10.7335912,9.37194437 L9.36507937,8.0034325 L10.7360526,6.63245928 C11.0344957,6.33401613 11.0349311,5.84948135 10.7370237,5.55157401 L10.448426,5.26297627 C10.1505186,4.96506892 9.66598387,4.96550426 9.36754072,5.26394741 L8.00589385,6.62559428 L6.63738198,5.25708241 C6.33947464,4.95917507 5.85493986,4.95961041 5.55649671,5.25805356 L5.26737991,5.54717036 C4.96893676,5.84561351 4.96850142,6.33014829 5.26640876,6.62805563 L6.62561103,7.9872579 L5.25463781,9.35823112 C4.95619466,9.65667427 4.95575932,10.141209 5.25366666,10.4391164 L5.5422644,10.7277141 C5.84017175,11.0256215 6.32470652,11.0251861 6.62314967,10.726743 L7.99412289,9.35576976 L9.36263476,10.7242816 C9.66054211,11.022189 10.1450769,11.0217536 10.44352,10.7233105 Z"></path></g></defs>
+  let elev = new Eleventy("test/stubs/nunjucks-svg/", "_site", {
+    config: $config => {
+      // see testing note at the top of this file
+      $config.on("eleventy.beforeConfig", () => {
+        $config.addPlugin(bundlePlugin, { force: true, immediate: true });
+      });
+    }
+  });
+  let results = await elev.toJSON();
+  t.deepEqual(normalize(results[0].content), `<svg width="0" height="0" aria-hidden="true" style="position: absolute;">
+<defs><g id="icon-close-legacy"><path d="M8,15 C4.13400675,15 1,11.8659932 1,8 C1,4.13400675 4.13400675,1 8,1 C11.8659932,1 15,4.13400675 15,8 C15,11.8659932 11.8659932,15 8,15 Z M10.44352,10.7233105 L10.4528296,10.7326201 L10.7326201,10.4528296 C11.0310632,10.1543865 11.0314986,9.66985171 10.7335912,9.37194437 L9.36507937,8.0034325 L10.7360526,6.63245928 C11.0344957,6.33401613 11.0349311,5.84948135 10.7370237,5.55157401 L10.448426,5.26297627 C10.1505186,4.96506892 9.66598387,4.96550426 9.36754072,5.26394741 L8.00589385,6.62559428 L6.63738198,5.25708241 C6.33947464,4.95917507 5.85493986,4.95961041 5.55649671,5.25805356 L5.26737991,5.54717036 C4.96893676,5.84561351 4.96850142,6.33014829 5.26640876,6.62805563 L6.62561103,7.9872579 L5.25463781,9.35823112 C4.95619466,9.65667427 4.95575932,10.141209 5.25366666,10.4391164 L5.5422644,10.7277141 C5.84017175,11.0256215 6.32470652,11.0251861 6.62314967,10.726743 L7.99412289,9.35576976 L9.36263476,10.7242816 C9.66054211,11.022189 10.1450769,11.0217536 10.44352,10.7233105 Z"></path></g></defs>
 </svg>`)
 });
 
 test("JS", async t => {
-	let elev = new Eleventy("test/stubs/liquid-js/", "_site", { configPath: "eleventy.bundle.js" });
-	let results = await elev.toJSON();
-	t.deepEqual(normalize(results[0].content), `<script>alert(1);
+  let elev = new Eleventy("test/stubs/liquid-js/", "_site", {
+    config: $config => {
+      // see testing note at the top of this file
+      $config.on("eleventy.beforeConfig", () => {
+        $config.addPlugin(bundlePlugin, { force: true, immediate: true });
+      });
+    }
+  });
+  let results = await elev.toJSON();
+  t.deepEqual(normalize(results[0].content), `<script>alert(1);
 alert(2);
 alert(3);</script>
 <script>alert(1);
@@ -96,167 +136,227 @@ alert(3);</script>`)
 });
 
 test("CSS, two buckets", async t => {
-	let elev = new Eleventy("test/stubs/liquid-buckets/", "_site", { configPath: "eleventy.bundle.js" });
-	let results = await elev.toJSON();
-	t.deepEqual(normalize(results[0].content), `<style>* { color: blue; }
+  let elev = new Eleventy("test/stubs/liquid-buckets/", "_site", {
+    config: $config => {
+      // see testing note at the top of this file
+      $config.on("eleventy.beforeConfig", () => {
+        $config.addPlugin(bundlePlugin, { force: true, immediate: true });
+      });
+    }
+  });
+  let results = await elev.toJSON();
+  t.deepEqual(normalize(results[0].content), `<style>* { color: blue; }
 * { color: orange; }</style>
 <style>* { color: blue; }
 * { color: red; }</style>`)
 });
 
 test("CSS, two buckets, explicit `default`", async t => {
-	let elev = new Eleventy("test/stubs/liquid-buckets-default/", "_site", { configPath: "eleventy.bundle.js" });
-	let results = await elev.toJSON();
+  let elev = new Eleventy("test/stubs/liquid-buckets-default/", "_site", {
+    config: $config => {
+      // see testing note at the top of this file
+      $config.on("eleventy.beforeConfig", () => {
+        $config.addPlugin(bundlePlugin, { force: true, immediate: true });
+      });
+    }
+  });
+  let results = await elev.toJSON();
 
-	t.deepEqual(normalize(results[0].content), `<style>* { color: blue; }
+  t.deepEqual(normalize(results[0].content), `<style>* { color: blue; }
 * { color: orange; }</style>
 <style>* { color: blue; }
 * { color: red; }</style>`)
 });
 
 test("CSS, get two buckets at once", async t => {
-	let elev = new Eleventy("test/stubs/buckets-get-multiple/", "_site", { configPath: "eleventy.bundle.js" });
-	let results = await elev.toJSON();
-	t.deepEqual(normalize(results[0].content), `<style>* { color: blue; }
+  let elev = new Eleventy("test/stubs/buckets-get-multiple/", "_site", {
+    config: $config => {
+      // see testing note at the top of this file
+      $config.on("eleventy.beforeConfig", () => {
+        $config.addPlugin(bundlePlugin, { force: true, immediate: true });
+      });
+    }
+  });
+  let results = await elev.toJSON();
+  t.deepEqual(normalize(results[0].content), `<style>* { color: blue; }
 * { color: orange; }
 * { color: red; }</style>`); // note that blue is only listed once, we de-dupe entries across buckets
 });
 
 test("CSS, get two buckets at once, reverse order", async t => {
-	let elev = new Eleventy("test/stubs/buckets-ordering/", "_site", { configPath: "eleventy.bundle.js" });
-	let results = await elev.toJSON();
-	t.deepEqual(normalize(results[0].content), `<style>* { color: blue; }
+  let elev = new Eleventy("test/stubs/buckets-ordering/", "_site", {
+    config: $config => {
+      // see testing note at the top of this file
+      $config.on("eleventy.beforeConfig", () => {
+        $config.addPlugin(bundlePlugin, { force: true, immediate: true });
+      });
+    }
+  });
+  let results = await elev.toJSON();
+  t.deepEqual(normalize(results[0].content), `<style>* { color: blue; }
 * { color: red; }
 * { color: orange; }</style>`); // note that blue is only listed once, we de-dupe entries across buckets
 });
 
 test("CSS, get two buckets at once (comma separated list)", async t => {
-	let elev = new Eleventy("test/stubs/buckets-get-multiple-comma-sep/", "_site", { configPath: "eleventy.bundle.js" });
-	let results = await elev.toJSON();
-	t.deepEqual(normalize(results[0].content), `<style>* { color: blue; }
+  let elev = new Eleventy("test/stubs/buckets-get-multiple-comma-sep/", "_site", {
+    config: $config => {
+      // see testing note at the top of this file
+      $config.on("eleventy.beforeConfig", () => {
+        $config.addPlugin(bundlePlugin, { force: true, immediate: true });
+      });
+    }
+  });
+  let results = await elev.toJSON();
+  t.deepEqual(normalize(results[0].content), `<style>* { color: blue; }
 * { color: orange; }
 * { color: red; }</style>`); // note that blue is only listed once, we de-dupe entries across buckets
 });
 
 test("toFile Filter (no writes)", async t => {
-	let elev = new Eleventy("test/stubs/to-file/", "_site", { configPath: "eleventy.bundle.js" });
-	let results = await elev.toJSON();
-	t.deepEqual(normalize(results[0].content), `<style>* { color: blue; }
+  let elev = new Eleventy("test/stubs/to-file/", "_site", {
+    config: $config => {
+      // see testing note at the top of this file
+      $config.on("eleventy.beforeConfig", () => {
+        $config.addPlugin(bundlePlugin, { force: true, immediate: true });
+      });
+    }
+  });
+  let results = await elev.toJSON();
+  t.deepEqual(normalize(results[0].content), `<style>* { color: blue; }
 * { color: red; }
 * { color: orange; }/* lololol */</style>
 <link rel="stylesheet" href="/bundle/AZBTWWtF0t.css">`); // note that blue is only listed once, we de-dupe entries across buckets
 
-	// does *not* write to the file system because of `toJSON` usage above.
-	t.falsy(fs.existsSync("./_site/bundle/AZBTWWtF0t.css"))
+  // does *not* write to the file system because of `toJSON` usage above.
+  t.falsy(fs.existsSync("./_site/bundle/AZBTWWtF0t.css"))
 });
 
 test("toFile Filter (write files)", async t => {
-	let elev = new Eleventy("test/stubs/to-file-write/", undefined, {
-		configPath: "eleventy.bundle.js",
-		config: function(eleventyConfig) {
-			eleventyConfig.setQuietMode(true);
-		}
-	});
+  let elev = new Eleventy("test/stubs/to-file-write/", undefined, {
+    config: function($config) {
+      // see testing note at the top of this file
+      $config.on("eleventy.beforeConfig", () => {
+        $config.addPlugin(bundlePlugin, { force: true, immediate: true });
+      });
 
-	await elev.write();
+      $config.setQuietMode(true);
+    }
+  });
 
-	t.is(normalize(fs.readFileSync("_site/to-file-write/index.html", "utf8")), `<style>* { color: blue; }
+  await elev.write();
+
+  t.is(normalize(fs.readFileSync("_site/to-file-write/index.html", "utf8")), `<style>* { color: blue; }
 * { color: red; }
 * { color: orange; }/* lololol2 */</style>
 <link rel="stylesheet" href="/bundle/Es4dSlOfrv.css">`); // note that blue is only listed once, we de-dupe entries across buckets
 
-	// does write to the file system because of `write` usage above.
-	t.is(normalize(fs.readFileSync("_site/bundle/Es4dSlOfrv.css", "utf8")), `* { color: blue; }
+  // does write to the file system because of `write` usage above.
+  t.is(normalize(fs.readFileSync("_site/bundle/Es4dSlOfrv.css", "utf8")), `* { color: blue; }
 * { color: red; }
 * { color: orange; }/* lololol2 */`);
 
-	fs.unlinkSync("_site/to-file-write/index.html");
-	fs.unlinkSync("_site/bundle/Es4dSlOfrv.css");
+  fs.unlinkSync("_site/to-file-write/index.html");
+  fs.unlinkSync("_site/bundle/Es4dSlOfrv.css");
 
-	t.false(fs.existsSync("_site/to-file-write/index.html"));
-	t.false(fs.existsSync("_site/bundle/Es4dSlOfrv.css"));
+  t.false(fs.existsSync("_site/to-file-write/index.html"));
+  t.false(fs.existsSync("_site/bundle/Es4dSlOfrv.css"));
 });
 
 test("toFile Filter (write files, deep output dir, issue #4)", async t => {
-	let elev = new Eleventy("test/stubs/to-file-write/", "test/stubs/to-file-write/_site", {
-		configPath: "eleventy.bundle.js",
-		config: function(eleventyConfig) {
-			eleventyConfig.setQuietMode(true);
-		}
-	});
+  let elev = new Eleventy("test/stubs/to-file-write/", "test/stubs/to-file-write/_site", {
+    config: function($config) {
+      // see testing note at the top of this file
+      $config.on("eleventy.beforeConfig", () => {
+        $config.addPlugin(bundlePlugin, { force: true, immediate: true });
+      });
 
-	await elev.write();
+      $config.setQuietMode(true);
+    }
+  });
 
-	t.is(normalize(fs.readFileSync("test/stubs/to-file-write/_site/to-file-write/index.html", "utf8")), `<style>* { color: blue; }
+  await elev.write();
+
+  t.is(normalize(fs.readFileSync("test/stubs/to-file-write/_site/to-file-write/index.html", "utf8")), `<style>* { color: blue; }
 * { color: red; }
 * { color: orange; }/* lololol2 */</style>
 <link rel="stylesheet" href="/bundle/Es4dSlOfrv.css">`); // note that blue is only listed once, we de-dupe entries across buckets
 
-	// does write to the file system because of `write` usage above.
-	t.is(normalize(fs.readFileSync("test/stubs/to-file-write/_site/bundle/Es4dSlOfrv.css", "utf8")), `* { color: blue; }
+  // does write to the file system because of `write` usage above.
+  t.is(normalize(fs.readFileSync("test/stubs/to-file-write/_site/bundle/Es4dSlOfrv.css", "utf8")), `* { color: blue; }
 * { color: red; }
 * { color: orange; }/* lololol2 */`);
 
-	fs.unlinkSync("test/stubs/to-file-write/_site/to-file-write/index.html");
-	fs.unlinkSync("test/stubs/to-file-write/_site/bundle/Es4dSlOfrv.css");
+  fs.unlinkSync("test/stubs/to-file-write/_site/to-file-write/index.html");
+  fs.unlinkSync("test/stubs/to-file-write/_site/bundle/Es4dSlOfrv.css");
 
-	t.false(fs.existsSync("test/stubs/to-file-write/_site/to-file-write/index.html"));
-	t.false(fs.existsSync("test/stubs/to-file-write/_site/bundle/Es4dSlOfrv.css"));
+  t.false(fs.existsSync("test/stubs/to-file-write/_site/to-file-write/index.html"));
+  t.false(fs.existsSync("test/stubs/to-file-write/_site/bundle/Es4dSlOfrv.css"));
 });
 
 test("toFile Filter (write files, out of order)", async t => {
-	let elev = new Eleventy("test/stubs/to-file-ordering/", undefined, {
-		configPath: "eleventy.bundle.js",
-		config: function(eleventyConfig) {
-			eleventyConfig.setQuietMode(true);
-		}
-	});
+  let elev = new Eleventy("test/stubs/to-file-ordering/", undefined, {
+    config: function($config) {
+      // see testing note at the top of this file
+      $config.on("eleventy.beforeConfig", () => {
+        $config.addPlugin(bundlePlugin, { force: true, immediate: true });
+      });
+      $config.setQuietMode(true);
+    }
+  });
 
-	await elev.write();
+  await elev.write();
 
-	t.is(normalize(fs.readFileSync("./_site/to-file-ordering/index.html", "utf8")), `<style>* { color: blue; }
+  t.is(normalize(fs.readFileSync("./_site/to-file-ordering/index.html", "utf8")), `<style>* { color: blue; }
 * { color: rebeccapurple; }</style>
 <link rel="stylesheet" href="/bundle/6_wo_c5eqX.css">`); // note that blue is only listed once, we de-dupe entries across buckets
 
-	// does write to the file system because of `write` usage above.
-	t.is(normalize(fs.readFileSync("./_site/bundle/6_wo_c5eqX.css", "utf8")), `* { color: blue; }
+  // does write to the file system because of `write` usage above.
+  t.is(normalize(fs.readFileSync("./_site/bundle/6_wo_c5eqX.css", "utf8")), `* { color: blue; }
 * { color: rebeccapurple; }`);
 
-	fs.unlinkSync("./_site/to-file-ordering/index.html");
-	fs.unlinkSync("./_site/bundle/6_wo_c5eqX.css");
+  fs.unlinkSync("./_site/to-file-ordering/index.html");
+  fs.unlinkSync("./_site/bundle/6_wo_c5eqX.css");
 
-	t.false(fs.existsSync("./_site/to-file-ordering/index.html"));
-	t.false(fs.existsSync("./_site/bundle/6_wo_c5eqX.css"));
+  t.false(fs.existsSync("./_site/to-file-ordering/index.html"));
+  t.false(fs.existsSync("./_site/bundle/6_wo_c5eqX.css"));
 });
 
 test("Bundle in Layout file", async t => {
-	let elev = new Eleventy("test/stubs/bundle-in-layout/", "_site", { configPath: "eleventy.bundle.js" });
-	let results = await elev.toJSON();
-	t.deepEqual(normalize(results[0].content), `<!doctype html><html><head><link href="https://v1.opengraph.11ty.dev" rel="preconnect" crossorigin></head></html>`);
+  let elev = new Eleventy("test/stubs/bundle-in-layout/", "_site", {
+    config: $config => {
+      // see testing note at the top of this file
+      $config.on("eleventy.beforeConfig", () => {
+        $config.addPlugin(bundlePlugin, { force: true, immediate: true });
+      });
+    }
+  });
+  let results = await elev.toJSON();
+  t.deepEqual(normalize(results[0].content), `<!doctype html><html><head><link href="https://v1.opengraph.11ty.dev" rel="preconnect" crossorigin></head></html>`);
 });
 
 test("Bundle with render plugin", async t => {
-	let elev = new Eleventy("test/stubs/bundle-render/", undefined, {
-		configPath: "eleventy.bundle.js",
-		config: function(eleventyConfig) {
-			eleventyConfig.addPlugin(RenderPlugin);
+  let elev = new Eleventy("test/stubs/bundle-render/", undefined, {
+    configPath: "src/BundlePlugin.js",
+    config: function(eleventyConfig) {
+      eleventyConfig.addPlugin(RenderPlugin);
 
-			eleventyConfig.addExtension("scss", {
-				outputFileExtension: "css",
+      eleventyConfig.addExtension("scss", {
+        outputFileExtension: "css",
 
-				compile: async function(inputContent) {
-					let result = sass.compileString(inputContent);
+        compile: async function(inputContent) {
+          let result = sass.compileString(inputContent);
 
-					// This is the render function, `data` is the full data cascade
-					return async (data) => {
-						return result.css;
-					};
-				}
-			});
-		}
-	});
-	let results = await elev.toJSON();
-	t.deepEqual(normalize(results[0].content), `<!-- inbetween -->
+          // This is the render function, `data` is the full data cascade
+          return async (data) => {
+            return result.css;
+          };
+        }
+      });
+    }
+  });
+  let results = await elev.toJSON();
+  t.deepEqual(normalize(results[0].content), `<!-- inbetween -->
 <style>
 h1 .test {
   color: red;
@@ -265,50 +365,58 @@ h1 .test {
 });
 
 test("No bundling", async t => {
-	let elev = new Eleventy("test/stubs/no-bundles/", "_site", { configPath: "eleventy.bundle.js" });
-	let results = await elev.toJSON();
-	t.deepEqual(normalize(results[0].content), `<!doctype html>
-<html lang="en">
-	<head>
-		<meta charset="utf-8">
-		<meta name="viewport" content="width=device-width, initial-scale=1.0">
-		<meta name="description" content="">
-		<title></title>
-	</head>
-	<body>
+  let elev = new Eleventy("test/stubs/no-bundles/", "_site", {
+    config: $config => {
+      // see testing note at the top of this file
+      $config.on("eleventy.beforeConfig", () => {
+        $config.addPlugin(bundlePlugin, { force: true, immediate: true });
+      });
+    }
+  });
 
-	</body>
+  let results = await elev.toJSON();
+  t.deepEqual(normalize(results[0].content), `<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="">
+    <title></title>
+  </head>
+  <body>
+
+  </body>
 </html>`);
 });
 
 test("Use Transforms", async t => {
-	let elev = new Eleventy("test/stubs/use-transforms/", undefined, {
-		configPath: "test/stubs/use-transforms/eleventy.config.js"
-	});
-	let results = await elev.toJSON();
-	t.deepEqual(normalize(results[0].content), `<style>* { color: blue; }
+  let elev = new Eleventy("test/stubs/use-transforms/", undefined, {
+    configPath: "test/stubs/use-transforms/eleventy.config.js"
+  });
+  let results = await elev.toJSON();
+  t.deepEqual(normalize(results[0].content), `<style>* { color: blue; }
 * { color: red; }
 #id * { color: orange; }</style>`);
 });
 
 test("Use Transforms on specific bundle type", async t => {
-	let elev = new Eleventy("test/stubs/use-transforms-on-type/", undefined, {
-		configPath: "test/stubs/use-transforms-on-type/eleventy.config.js"
-	});
-	let results = await elev.toJSON();
-	t.deepEqual(normalize(results[0].content), `<style>* { color: blue; }
+  let elev = new Eleventy("test/stubs/use-transforms-on-type/", undefined, {
+    configPath: "test/stubs/use-transforms-on-type/eleventy.config.js"
+  });
+  let results = await elev.toJSON();
+  t.deepEqual(normalize(results[0].content), `<style>* { color: blue; }
 * { color: red; }
 #id * { color: orange; }</style>
 <script>console.log("bundle me up")</script>`);
 });
 
 test("Output `defer` bucket multiple times (hoisting disabled)", async t => {
-	let elev = new Eleventy("test/stubs/output-same-bucket-multiple-times-nohoist/", undefined, {
-		configPath: "eleventy.bundle.js"
-	});
+  let elev = new Eleventy("test/stubs/output-same-bucket-multiple-times-nohoist/", undefined, {
+    configPath: "src/BundlePlugin.js"
+  });
 
-	let results = await elev.toJSON();
-	t.deepEqual(normalize(results[0].content), `<style>* { color: blue; }</style>
+  let results = await elev.toJSON();
+  t.deepEqual(normalize(results[0].content), `<style>* { color: blue; }</style>
 <style>* { color: blue; }
 * { color: red; }</style>
 <style>* { color: blue; }
@@ -316,257 +424,281 @@ test("Output `defer` bucket multiple times (hoisting disabled)", async t => {
 });
 
 test("Output `defer` bucket multiple times (does hoisting)", async t => {
-	let elev = new Eleventy("test/stubs/output-same-bucket-multiple-times/", undefined, {
-		configPath: "test/stubs/output-same-bucket-multiple-times/eleventy.config.js"
-	});
+  let elev = new Eleventy("test/stubs/output-same-bucket-multiple-times/", undefined, {
+    configPath: "test/stubs/output-same-bucket-multiple-times/eleventy.config.js"
+  });
 
-	let results = await elev.toJSON();
-	t.deepEqual(normalize(results[0].content), `<style>* { color: blue; }
+  let results = await elev.toJSON();
+  t.deepEqual(normalize(results[0].content), `<style>* { color: blue; }
 * { color: red; }</style>`);
 });
 
 test("Output `default` bucket multiple times (no hoisting)", async t => {
-	let elev = new Eleventy("test/stubs/output-default-multiple-times/", undefined, {
-		configPath: "test/stubs/output-default-multiple-times/eleventy.config.js"
-	});
+  let elev = new Eleventy("test/stubs/output-default-multiple-times/", undefined, {
+    config: ($config) => {
+      // see testing note at the top of this file
+      $config.on("eleventy.beforeConfig", () => {
+        $config.addPlugin(bundlePlugin, {
+          force: true,
+          immediate: true,
+          hoistDuplicateBundlesFor: ["css", "js"],
+        });
+      });
+    }
+  });
 
-	let results = await elev.toJSON();
-	t.deepEqual(normalize(results[0].content), `<style>* { color: blue; }</style>
+  let results = await elev.toJSON();
+  t.deepEqual(normalize(results[0].content), `<style>* { color: blue; }</style>
 <style>* { color: blue; }</style>`);
 });
 
 test("`defer` hoisting", async t => {
-	let elev = new Eleventy("test/stubs/to-file-duplicates/", undefined, {
-		configPath: "test/stubs/to-file-duplicates/eleventy.config.js"
-	});
+  let elev = new Eleventy("test/stubs/to-file-duplicates/", undefined, {
+    config: ($config) => {
+      // see testing note at the top of this file
+      $config.on("eleventy.beforeConfig", () => {
+        $config.addPlugin(bundlePlugin, {
+          force: true,
+          immediate: true,
+          hoistDuplicateBundlesFor: ["css", "js"],
+        });
+      });
+    }
+  });
 
-	let results = await elev.toJSON();
-	results.sort((a, b) => {
-		if(a.inputPath > b.inputPath) {
-			return 1;
-		}
-		return -1;
-	})
+  let results = await elev.toJSON();
+  results.sort((a, b) => {
+    if(a.inputPath > b.inputPath) {
+      return 1;
+    }
+    return -1;
+  })
 
-	t.deepEqual(normalize(results[0].content), `<link rel="stylesheet" href="/bundle/S_XQgJiZBL.css">
+  t.deepEqual(normalize(results[0].content), `<link rel="stylesheet" href="/bundle/S_XQgJiZBL.css">
 <link rel="stylesheet" href="/bundle/S_XQgJiZBL.css">`);
 
-	t.deepEqual(normalize(results[1].content), `<style>* { color: blue; }</style>`);
+  t.deepEqual(normalize(results[1].content), `<style>* { color: blue; }</style>`);
 
-	t.deepEqual(normalize(results[2].content), `<style>* { color: blue; }</style>`);
+  t.deepEqual(normalize(results[2].content), `<style>* { color: blue; }</style>`);
 });
 
 test("Bundle export key as string (11ty.js)", async t => {
-	let elev = new Eleventy("test/stubs/export-key-str/", "_site", { configPath: "test/stubs/export-key-str/eleventy.config.js" });
-	let results = await elev.toJSON();
-	t.deepEqual(normalize(results[0].content), `<style>/* Hello */</style><script>/* Hello */</script>`)
+  let elev = new Eleventy("test/stubs/export-key-str/", "_site", { configPath: "test/stubs/export-key-str/eleventy.config.js" });
+  let results = await elev.toJSON();
+  t.deepEqual(normalize(results[0].content), `<style>/* Hello */</style><script>/* Hello */</script>`)
 });
 
 test("Bundle export key as object (11ty.js)", async t => {
-	let elev = new Eleventy("test/stubs/export-key-obj/", "_site", { configPath: "test/stubs/export-key-obj/eleventy.config.js" });
-	let results = await elev.toJSON();
-	t.deepEqual(normalize(results[0].content), `<style>/* CSS */</style><script>/* JS */</script>`)
+  let elev = new Eleventy("test/stubs/export-key-obj/", "_site", { configPath: "test/stubs/export-key-obj/eleventy.config.js" });
+  let results = await elev.toJSON();
+  t.deepEqual(normalize(results[0].content), `<style>/* CSS */</style><script>/* JS */</script>`)
 });
 
 test("Bundle export key as string, using separate bundleExportKey’s (11ty.js)", async t => {
-	let elev = new Eleventy("test/stubs/export-key-str-rename/", "_site", { configPath: "test/stubs/export-key-str-rename/eleventy.config.js" });
-	let results = await elev.toJSON();
-	t.deepEqual(normalize(results[0].content), `<style>/* CSS */</style><script>/* JS */</script>`)
+  let elev = new Eleventy("test/stubs/export-key-str-rename/", "_site", { configPath: "test/stubs/export-key-str-rename/eleventy.config.js" });
+  let results = await elev.toJSON();
+  t.deepEqual(normalize(results[0].content), `<style>/* CSS */</style><script>/* JS */</script>`)
 });
 
 test("Empty CSS bundle (trimmed) removes empty <style> tag", async t => {
-	let elev = new Eleventy("test/stubs-virtual/", "_site", {
-		config: function(eleventyConfig) {
-			eleventyConfig.addPlugin(bundlePlugin);
+  let elev = new Eleventy("test/stubs-virtual/", "_site", {
+    config: function(eleventyConfig) {
+      eleventyConfig.addPlugin(bundlePlugin);
 
-			eleventyConfig.addTemplate('test.njk', `<div></div><style>{% getBundle "css" %}</style>
+      eleventyConfig.addTemplate('test.njk', `<div></div><style>{% getBundle "css" %}</style>
 {%- css %}            {% endcss %}`)
-		}
-	});
-	let results = await elev.toJSON();
-	t.deepEqual(normalize(results[0].content), `<div></div>`)
+    }
+  });
+  let results = await elev.toJSON();
+  t.deepEqual(normalize(results[0].content), `<div></div>`)
 });
 
 test("Empty JS bundle (trimmed) removes empty <script> tag", async t => {
-	let elev = new Eleventy("test/stubs-virtual/", "_site", {
-		config: function(eleventyConfig) {
-			eleventyConfig.addPlugin(bundlePlugin);
+  let elev = new Eleventy("test/stubs-virtual/", "_site", {
+    config: function(eleventyConfig) {
+      eleventyConfig.addPlugin(bundlePlugin);
 
-			eleventyConfig.addTemplate('test.njk', `<div></div><script>{% getBundle "css" %}</script>
+      eleventyConfig.addTemplate('test.njk', `<div></div><script>{% getBundle "css" %}</script>
 {%- js %}            {% endjs %}`)
-		}
-	});
-	let results = await elev.toJSON();
-	t.deepEqual(normalize(results[0].content), `<div></div>`)
+    }
+  });
+  let results = await elev.toJSON();
+  t.deepEqual(normalize(results[0].content), `<div></div>`)
 });
 
 test("Empty CSS bundle (trimmed) removes empty <link rel=stylesheet> tag", async t => {
-	let elev = new Eleventy("test/stubs-virtual/", "_site", {
-		config: function(eleventyConfig) {
-			eleventyConfig.addPlugin(bundlePlugin);
+  let elev = new Eleventy("test/stubs-virtual/", "_site", {
+    config: function(eleventyConfig) {
+      eleventyConfig.addPlugin(bundlePlugin);
 
-			eleventyConfig.addTemplate('test.njk', `<div></div><link rel="stylesheet" href="{% getBundleFileUrl "css" %}">
+      eleventyConfig.addTemplate('test.njk', `<div></div><link rel="stylesheet" href="{% getBundleFileUrl "css" %}">
 {%- css %}            {% endcss %}`)
-		}
-	});
-	let results = await elev.toJSON();
-	t.deepEqual(normalize(results[0].content), `<div></div>`)
+    }
+  });
+  let results = await elev.toJSON();
+  t.deepEqual(normalize(results[0].content), `<div></div>`)
 });
 
 // This requires `htmlTransformer.remove` which is core v3.0.1-alpha.4+
 test("Empty CSS bundle (trimmed) does *not* remove empty <style> tag", async t => {
-	let elev = new Eleventy("test/stubs-virtual/", "_site", {
-		// See testing note at top of this file
-		configPath: "test/stubs/no-prune/eleventy.config.js",
-	});
-	let results = await elev.toJSON();
-	t.deepEqual(normalize(results[0].content), `<div></div><style></style>`)
+  let elev = new Eleventy("test/stubs-virtual/", "_site", {
+    // See testing note at top of this file
+    configPath: "test/stubs/no-prune/eleventy.config.js",
+  });
+  let results = await elev.toJSON();
+  t.deepEqual(normalize(results[0].content), `<div></div><style></style>`)
 });
 
 // This requires `htmlTransformer.remove` which is core v3.0.1-alpha.4+
 test("Empty CSS bundle (trimmed) does *not* remove empty <style eleventy:keep> tag", async t => {
-	let elev = new Eleventy("test/stubs-virtual/", "_site", {
-		config: function(eleventyConfig) {
-			eleventyConfig.addPlugin(bundlePlugin);
+  let elev = new Eleventy("test/stubs-virtual/", "_site", {
+    config: function(eleventyConfig) {
+      eleventyConfig.addPlugin(bundlePlugin);
 
-			eleventyConfig.addTemplate('test.njk', `<div></div><style eleventy:keep>{% getBundle "css" %}</style>
+      eleventyConfig.addTemplate('test.njk', `<div></div><style eleventy:keep>{% getBundle "css" %}</style>
 {%- css %}            {% endcss %}`)
-		}
-	});
+    }
+  });
 
-	let results = await elev.toJSON();
-	t.deepEqual(normalize(results[0].content), `<div></div><style></style>`)
+  let results = await elev.toJSON();
+  t.deepEqual(normalize(results[0].content), `<div></div><style></style>`)
 });
 
 // This one requires a new Eleventy v3.0.0-alpha.20 or -beta.2 release, per the `enabled` option on plugins to HtmlTransformer
 test("<style> is left as-is (not removed) because there are *no* bundles", async t => {
-	let elev = new Eleventy("test/stubs-virtual/", "_site", {
-		config: function(eleventyConfig) {
-			eleventyConfig.addPlugin(bundlePlugin, {
-				bundles: false,
-			});
+  let elev = new Eleventy("test/stubs-virtual/", "_site", {
+    config: function(eleventyConfig) {
+      eleventyConfig.addPlugin(bundlePlugin, {
+        bundles: false,
+      });
 
-			eleventyConfig.addTemplate('test.njk', `<div></div><style></style>`)
-		}
-	});
+      eleventyConfig.addTemplate('test.njk', `<div></div><style></style>`)
+    }
+  });
 
-	let results = await elev.toJSON();
-	t.deepEqual(normalize(results[0].content), `<div></div><style></style>`)
+  let results = await elev.toJSON();
+  t.deepEqual(normalize(results[0].content), `<div></div><style></style>`)
 });
 
 test("Delayed Bundle can be modified by transforms", async t => {
-	let elev = new Eleventy("test/stubs-virtual/", "_site", {
-		// See testing note at top of this file
-		configPath: "test/stubs/delayed-bundle/eleventy.config.js",
-	});
+  let elev = new Eleventy("test/stubs-virtual/", "_site", {
+    // See testing note at top of this file
+    configPath: "test/stubs/delayed-bundle/eleventy.config.js",
+  });
 
-	let results = await elev.toJSON();
-	t.deepEqual(normalize(results[0].content), `testing:this is svg`)
+  let results = await elev.toJSON();
+  t.deepEqual(normalize(results[0].content), `testing:this is svg`)
 });
 
 test("config and configPath handles multiple addPlugin calls just fine", async t => {
-	let elev = new Eleventy("test/stubs-virtual/", "_site", {
-		// See testing note at top of this file
-		configPath: "test/stubs/duplicate-addplugins/eleventy.config.js",
-		config: function(eleventyConfig) {
-			eleventyConfig.addPlugin(bundlePlugin, {
-				bundles: false,
-			});
+  let elev = new Eleventy("test/stubs-virtual/", "_site", {
+    // See testing note at top of this file
+    configPath: "test/stubs/duplicate-addplugins/eleventy.config.js",
+    config: function(eleventyConfig) {
+      eleventyConfig.addPlugin(bundlePlugin, {
+        bundles: false,
+      });
 
-			eleventyConfig.addTemplate('test.njk', `<div></div>`)
-		}
-	});
+      eleventyConfig.addTemplate('test.njk', `<div></div>`)
+    }
+  });
 
-	let results = await elev.toJSON();
-	t.deepEqual(normalize(results[0].content), `<div></div>`)
+  let results = await elev.toJSON();
+  t.deepEqual(normalize(results[0].content), `<div></div>`)
 });
 
 test("<style> plucked into bundle", async t => {
-	let elev = new Eleventy("test/stubs/pluck-html-css/", "_site", {
-		configPath: "test/stubs/pluck-html-css/eleventy.config.js",
-	});
+  let elev = new Eleventy("test/stubs/pluck-html-css/", "_site", {
+    configPath: "test/stubs/pluck-html-css/eleventy.config.js",
+  });
 
-	let results = await elev.toJSON();
-	t.deepEqual(normalize(results[0].content), `<style>* { color: yellow }</style><div></div><style>* { color: red }
+  let results = await elev.toJSON();
+  t.deepEqual(normalize(results[0].content), `<style>* { color: yellow }</style><div></div><style>* { color: red }
 body { color: blue }</style>`)
 });
 
 test("<script> plucked into bundle (and transforms)", async t => {
-	let elev = new Eleventy("test/stubs/pluck-html-js/", "_site", {
-		configPath: "test/stubs/pluck-html-js/eleventy.config.js",
-	});
+  let elev = new Eleventy("test/stubs/pluck-html-js/", "_site", {
+    configPath: "test/stubs/pluck-html-js/eleventy.config.js",
+  });
 
-	let results = await elev.toJSON();
-	t.deepEqual(normalize(results[0].content), `<div></div><script>/* Banner from Transforms */
+  let results = await elev.toJSON();
+  t.deepEqual(normalize(results[0].content), `<div></div><script>/* Banner from Transforms */
 /* Bundle one */
 /* Bundle two */</script>`)
 });
 
 test("<style> plucked into bundle with buckets", async t => {
-	let elev = new Eleventy("test/stubs/pluck-html-css-buckets/", "_site", {
-		configPath: "test/stubs/pluck-html-css-buckets/eleventy.config.js",
-	});
+  let elev = new Eleventy("test/stubs/pluck-html-css-buckets/", "_site", {
+    configPath: "test/stubs/pluck-html-css-buckets/eleventy.config.js",
+  });
 
-	let results = await elev.toJSON();
-	t.deepEqual(normalize(results[0].content), `<div></div><style>@layer layer1 { * { color: yellow }
+  let results = await elev.toJSON();
+  t.deepEqual(normalize(results[0].content), `<div></div><style>@layer layer1 { * { color: yellow }
 body { color: blue } } @layer layer2 { * { color: red } } * { color: orange }</style>`)
 });
 
 test("Markdown bundle in a markdown file, Issue #31", async t => {
-	let elev = new Eleventy("test/stubs-virtual/", "_site", {
-	config: function($config) {
-		$config.addPlugin(bundlePlugin);
-		$config.addPlugin(() => {
-			$config.addBundle("mybundle")
-		});
+  let elev = new Eleventy("test/stubs-virtual/", "_site", {
+  config: function($config) {
+    // see testing note at the top of this file
+    $config.on("eleventy.beforeConfig", () => {
+      $config.addPlugin(bundlePlugin, { bundles: false, immediate: true });
 
-		$config.addTemplate('index.md', `{% getBundle "mybundle" %}
+      $config.addBundle("mybundle")
+    });
+
+    $config.addTemplate('index.md', `{% getBundle "mybundle" %}
 {% mybundle %}
 > Lorem ipsum dolor sit amet.
 {% endmybundle %}`)
-		}
-	});
-	let results = await elev.toJSON();
-	t.deepEqual(normalize(results[0].content), `> Lorem ipsum dolor sit amet.`)
+    }
+  });
+  let results = await elev.toJSON();
+  t.deepEqual(normalize(results[0].content), `> Lorem ipsum dolor sit amet.`)
 });
 
 test("Pluck and empty bundles Issue #39", async t => {
-	let elev = new Eleventy("test/stubs-virtual/", "_site", {
-	config: function($config) {
-		$config.addPlugin(bundlePlugin);
-		$config.addPlugin(() => {
-			$config.addBundle("css", {
-				bundleHtmlContentFromSelector: "style",
-			});
-		});
+  let elev = new Eleventy("test/stubs-virtual/", "_site", {
+  config: function($config) {
+    // see testing note at the top of this file
+    $config.on("eleventy.beforeConfig", () => {
+      $config.addPlugin(bundlePlugin, { bundles: false, immediate: true });
 
-		$config.addTemplate('index.liquid', `<!doctype html><link href="{% getBundleFileUrl "css" %}" rel="stylesheet">`)
-		}
-	});
+        $config.addBundle("css", {
+          bundleHtmlContentFromSelector: "style",
+        });
+      });
 
-	let results = await elev.toJSON();
-	t.deepEqual(normalize(results[0].content), `<!doctype html>`)
+      $config.addTemplate('index.liquid', `<!doctype html><link href="{% getBundleFileUrl "css" %}" rel="stylesheet">`)
+    }
+  });
+
+  let results = await elev.toJSON();
+  t.deepEqual(normalize(results[0].content), `<!doctype html>`)
 });
 
 test.skip("<selectedcontent> Issue #40", async t => {
-	let elev = new Eleventy("test/stubs-virtual/", "_site", {
-	config: function($config) {
-		$config.addPlugin(bundlePlugin);
-		$config.addPlugin(() => {
-			$config.addBundle("css");
-		});
+  let elev = new Eleventy("test/stubs-virtual/", "_site", {
+  config: function($config) {
+    // see testing note at the top of this file
+    $config.on("eleventy.beforeConfig", () => {
+      $config.addPlugin(bundlePlugin, { bundles: false, force: true, immediate: true });
 
-		$config.addTemplate('index.html', `<!doctype html><select>
+      $config.addBundle("css");
+    });
+
+    $config.addTemplate('index.html', `<!doctype html><select>
 <button><selectedcontent></selectedcontent></button>
 <option value="pokeball">Pokeball</option>
 <option value="greatball">Great ball</option>
 <option value="ultraball">Ultra ball</option>
 </select>`)
-		}
-	});
+    }
+  });
 
-	let results = await elev.toJSON();
-	t.deepEqual(normalize(results[0].content), `<!doctype html><select>
+  let results = await elev.toJSON();
+  t.deepEqual(normalize(results[0].content), `<!doctype html><select>
 <button><selectedcontent></selectedcontent></button>
 <option value="pokeball">Pokeball</option>
 <option value="greatball">Great ball</option>
@@ -577,7 +709,11 @@ test.skip("<selectedcontent> Issue #40", async t => {
 test("Pagination bundles plucked, Issue #37", async (t) => {
   let elev = new Eleventy("./test/stubs-virtual/", undefined, {
     config: $config => {
-      $config.addPlugin(() => {
+      // see testing note at the top of this file
+      $config.on("eleventy.beforeConfig", () => {
+        // immediate is important if you want to add bundles immediately
+        $config.addPlugin(bundlePlugin, { bundles: false, force: true, immediate: true });
+
         $config.addBundle("css", {
           bundleHtmlContentFromSelector: "style",
         });
@@ -610,15 +746,43 @@ Paged<style>* { color: blue }</style>{% for post in posts %}{{ post.content | sa
 test("getBundle and 11ty.js Issue #26", async (t) => {
   let elev = new Eleventy("./test/stubs-virtual/", undefined, {
     config: $config => {
-      $config.addPlugin(() => {
+      // see testing note at the top of this file
+      $config.on("eleventy.beforeConfig", () => {
+        $config.addPlugin(bundlePlugin, { bundles: false, force: true, immediate: true });
+
         $config.addBundle("css", {
           bundleHtmlContentFromSelector: "style",
         });
+      })
+
+      $config.addTemplate("index.11ty.js", function() {
+        return `Index<style>* { color: red }</style><style>/* Generated Bundle */${this.getBundle("css")}</style>`;
+      });
+    }
+  });
+
+  let results = await elev.toJSON();
+  t.is(results.length, 1);
+  t.is(results[0].content, `Index<style>/* Generated Bundle */* { color: red }</style>`);
+});
+
+// TODO fix
+test.skip("Programmatic bundle Issue #25", async (t) => {
+  let cssBundle = new Bundle("css");
+  cssBundle.setPluckedSelector("style")
+
+  let elev = new Eleventy("./test/stubs-virtual/", undefined, {
+    config: $config => {
+      // see testing note at the top of this file
+      $config.on("eleventy.beforeConfig", () => {
+        $config.addPlugin(bundlePlugin, { bundles: false, force: true, immediate: true });
+
+        $config.addBundle(cssBundle);
       });
 
       $config.addTemplate("index.11ty.js", function() {
-				return `Index<style>* { color: red }</style><style>/* Generated Bundle */${this.getBundle("css")}</style>`;
-			});
+        return `Index<style>* { color: red }</style><style>/* Generated Bundle */${this.getBundle("css")}</style>`;
+      });
     }
   });
 

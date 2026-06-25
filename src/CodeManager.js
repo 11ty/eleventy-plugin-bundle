@@ -2,9 +2,9 @@ import { createDebug } from "obug";
 import { BundleFileOutput } from "./BundleFileOutput.js";
 
 const debug = createDebug("Eleventy:Bundle");
-const DEBUG_LOG_TRUNCATION_SIZE = 200;
+const DEBUG_LOG_TRUNCATION_SIZE = 100;
 
-class CodeManager {
+export class CodeManager {
 	// code is placed in this bucket by default
 	static DEFAULT_BUCKET_NAME = "default";
 
@@ -229,5 +229,3 @@ class CodeManager {
 		delete this.pages[url][bucketName];
 	}
 }
-
-export { CodeManager };

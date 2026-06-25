@@ -1,4 +1,4 @@
-import bundlePlugin from "../eleventy.bundle.js";
+import bundlePlugin from "../src/BundlePlugin.js";
 
 export default function(eleventyConfig) {
 	// This call is what Eleventy will do in the default config in 3.0.0-alpha.10

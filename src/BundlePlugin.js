@@ -1,11 +1,12 @@
-import bundleManagersPlugin from "./src/eleventy.bundleManagers.js";
-import pruneEmptyBundlesPlugin from "./src/eleventy.pruneEmptyBundles.js";
-import globalShortcodesAndTransforms from "./src/eleventy.shortcodes.js";
 import { createDebug } from "obug";
+import bundleManagersPlugin from "./BundleManagersPlugin.js";
+import pruneEmptyBundlesPlugin from "./PruneEmptyBundlesPlugin.js";
+import globalShortcodesAndTransforms from "./ShortcodesPlugin.js";
+export { CodeManager as Bundle } from "./CodeManager.js";
 
 const debug = createDebug("Eleventy:Bundle");
 
-function normalizeOptions(options = {}) {
+export function normalizeOptions(options = {}) {
 	options = Object.assign({
 		// Plugin defaults
 
@@ -28,10 +29,9 @@ function normalizeOptions(options = {}) {
 	return options;
 }
 
-function eleventyBundlePlugin(eleventyConfig, pluginOptions = {}) {
-	eleventyConfig.versionCheck(">=3.0.0");
+export default function eleventyBundlePlugin(eleventyConfig, pluginOptions = {}) {
+	eleventyConfig.versionCheck(">=4.0.0-0");
 	pluginOptions = normalizeOptions(pluginOptions);
-
 	let alreadyAdded = "getBundleManagers" in eleventyConfig || "addBundle" in eleventyConfig;
 	if(!alreadyAdded || pluginOptions.force) {
 		if(alreadyAdded && pluginOptions.force) {
@@ -67,6 +67,3 @@ function eleventyBundlePlugin(eleventyConfig, pluginOptions = {}) {
 Object.defineProperty(eleventyBundlePlugin, "eleventyPackage", {
 	value: "@11ty/eleventy-plugin-bundle"
 });
-
-export default eleventyBundlePlugin;
-export { normalizeOptions };

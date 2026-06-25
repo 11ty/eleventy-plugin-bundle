@@ -51,13 +51,17 @@ function hasEmptyBundle(bundleAssetKey, context, bundleManagers) {
 }
 
 export default function eleventyPruneEmptyBundles(eleventyConfig, options = {}) {
-	// Right now script[src],link[rel="stylesheet"] nodes are removed if the final bundles are empty.
-	// `false` to disable
+	if(!eleventyConfig.htmlTransformer || !eleventyConfig.htmlTransformer?.constructor?.SUPPORTS_PLUGINS_ENABLED_CALLBACK) {
+		debug("You will need to upgrade your version of Eleventy core to remove empty bundle tags automatically (v3 or newer).");
+		return;
+	}
+
+	// Right now empty bundle nodes are removed if the final bundles are empty. Use `false` to disable
 	options.pruneEmptySelector = options.pruneEmptySelector ?? `style,script,link[rel="stylesheet"]`;
 
 	// Subsequent call can remove a previously added `addPosthtmlPlugin` entry
 	// htmlTransformer.remove is v3.0.1-alpha.4+
-	if(typeof eleventyConfig.htmlTransformer.remove === "function") {
+	if(typeof eleventyConfig.htmlTransformer?.remove === "function") {
 		eleventyConfig.htmlTransformer.remove("html", entry => {
 			if(entry.name === POSTHTML_PLUGIN_NAME) {
 				return true;
@@ -71,11 +75,6 @@ export default function eleventyPruneEmptyBundles(eleventyConfig, options = {}) 
 
 	// `false` disables this plugin
 	if(options.pruneEmptySelector === false) {
-		return;
-	}
-
-	if(!eleventyConfig.htmlTransformer || !eleventyConfig.htmlTransformer?.constructor?.SUPPORTS_PLUGINS_ENABLED_CALLBACK) {
-		debug("You will need to upgrade your version of Eleventy core to remove empty bundle tags automatically (v3 or newer).");
 		return;
 	}
 
