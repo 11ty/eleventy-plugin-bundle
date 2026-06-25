@@ -25,7 +25,7 @@
 	],
 	"repository": {
 		"type": "git",
-		"url": "git://github.com/11ty/eleventy-plugin-bundle.git"
+		"url": "git+https://github.com/11ty/eleventy-plugin-bundle.git"
 	},
 	"bugs": "https://github.com/11ty/eleventy-plugin-bundle/issues",
 	"homepage": "https://www.11ty.dev/",
