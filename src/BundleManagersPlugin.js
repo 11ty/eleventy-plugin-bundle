@@ -72,10 +72,13 @@ export default function eleventyBundleManagers(eleventyConfig, pluginOptions = {
 
 			// e.g. `css` shortcode to add code to page bundle
 			// These shortcode names are not configurable on purpose (for wider plugin compatibility)
-			// Core v4.0.0-alpha.5 regression in https://github.com/11ty/buildawesome/issues/2261 requires
-			//     paired shortcodes to be async to receive async rendered child `content` argument.
+
+			// Core v4.0.0-alpha.5 regression in https://github.com/11ty/buildawesome/issues/2261
+			//     Nunjucks paired shortcodes need to be async to receive async rendered child `content` argument.
 			//     Related to https://github.com/11ty/eleventy-plugin-bundle/issues/36
-			eleventyConfig.addPairedShortcode(shortcodeName, async function addContent(content, bucket, explicitUrl) {
+
+			// Core v4.0.0-alpha.9 uses fully-async nunjucks (v4.0.0-alpha.3) see test for Issue #25
+			eleventyConfig.addPairedShortcode(shortcodeName, function addContent(content, bucket, explicitUrl) {
 				let url = explicitUrl || this.page?.url;
 				if(url) { // don’t add if a file doesn’t have an output URL
 					managers[name].addToPage(url, content, bucket);
