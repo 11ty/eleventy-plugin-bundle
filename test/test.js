@@ -335,10 +335,11 @@ test("Bundle in Layout file", async t => {
   t.deepEqual(normalize(results[0].content), `<!doctype html><html><head><link href="https://v1.opengraph.11ty.dev" rel="preconnect" crossorigin></head></html>`);
 });
 
-test("Bundle with render plugin", async t => {
-  let elev = new Eleventy("test/stubs/bundle-render/", undefined, {
+// Tested locally with core v4.0.0-alpha.9, uncomment after it ships
+test.skip("Bundle with render plugin renderTemplate liquid", async t => {
+  let elev = new Eleventy("test/stubs-virtual/", undefined, {
     config: function($config) {
-			// see testing note at the top of this file
+      // see testing note at the top of this file
       $config.on("eleventy.beforeConfig", () => {
         $config.addPlugin(bundlePlugin, { force: true, immediate: true });
       });
@@ -357,15 +358,89 @@ test("Bundle with render plugin", async t => {
           };
         }
       });
+
+      $config.addTemplate("index.liquid", `{% css %}{% renderTemplate "scss" %}h1 { .test { color: red; } }{% endrenderTemplate %}{% endcss %}
+<!-- inbetween -->
+<style>{% getBundle "css" %}</style>`);
     }
   });
+
   let results = await elev.toJSON();
   t.deepEqual(normalize(results[0].content), `<!-- inbetween -->
-<style>
-h1 .test {
+<style>h1 .test {
   color: red;
-}
-</style>`);
+}</style>`);
+});
+
+// Tested locally with core v4.0.0-alpha.9, uncomment after it ships
+test.skip("Bundle with render plugin renderTemplate njk", async t => {
+  let elev = new Eleventy("test/stubs-virtual/", undefined, {
+    config: function($config) {
+      // see testing note at the top of this file
+      $config.on("eleventy.beforeConfig", () => {
+        $config.addPlugin(bundlePlugin, { force: true, immediate: true });
+      });
+
+      $config.addPlugin(RenderPlugin);
+
+      $config.addExtension("scss", {
+        outputFileExtension: "css",
+
+        compile: async function(inputContent) {
+          let result = sass.compileString(inputContent);
+
+          // This is the render function, `data` is the full data cascade
+          return async (data) => {
+            return result.css;
+          };
+        }
+      });
+
+      $config.addTemplate("index.njk", `{% css %}/* hi */{% renderTemplate "scss" %}h1 { .test { color: red; } }{% endrenderTemplate %}{% endcss %}
+<!-- inbetween --><style>/* bundle */{% getBundle "css" %}</style>`)
+    }
+  });
+
+  let results = await elev.toJSON();
+  t.deepEqual(normalize(results[0].content), `<!-- inbetween --><style>/* bundle *//* hi */h1 .test {
+  color: red;
+}</style>`);
+});
+
+// Tested locally with core v4.0.0-alpha.9, uncomment after it ships
+test.skip("Bundle with render plugin renderFile", async t => {
+  let elev = new Eleventy("test/stubs/render-file/", undefined, {
+    config: function($config) {
+      // see testing note at the top of this file
+      $config.on("eleventy.beforeConfig", () => {
+        $config.addPlugin(bundlePlugin, { force: true, immediate: true });
+      });
+
+      $config.addPlugin(RenderPlugin);
+
+      $config.addExtension("scss", {
+        outputFileExtension: "css",
+
+        compile: async function(inputContent) {
+          let result = sass.compileString(inputContent);
+
+          // This is the render function, `data` is the full data cascade
+          return async (data) => {
+            return result.css;
+          };
+        }
+      });
+
+      $config.addTemplate("index.njk", `{% css %}{% renderFile "test/stubs/render-file/_includes/test.scss" %}{% endcss -%}<!-- inbetween -->
+<style>{% getBundle "css" %}</style>`)
+    }
+  });
+
+  let results = await elev.toJSON();
+  t.deepEqual(normalize(results[0].content), `<!-- inbetween -->
+<style>* {
+  color: blue;
+}</style>`);
 });
 
 test("No bundling", async t => {
@@ -416,12 +491,12 @@ test("Use Transforms on specific bundle type", async t => {
 
 test("Output `defer` bucket multiple times (hoisting disabled)", async t => {
   let elev = new Eleventy("test/stubs/output-same-bucket-multiple-times-nohoist/", undefined, {
-		config: $config => {
-    	// see testing note at the top of this file
+    config: $config => {
+      // see testing note at the top of this file
       $config.on("eleventy.beforeConfig", () => {
         $config.addPlugin(bundlePlugin, { force: true, immediate: true });
       });
-		}
+    }
   });
 
   let results = await elev.toJSON();
@@ -511,10 +586,13 @@ test("Bundle export key as string, using separate bundleExportKey’s (11ty.js)"
 
 test("Empty CSS bundle (trimmed) removes empty <style> tag", async t => {
   let elev = new Eleventy("test/stubs-virtual/", "_site", {
-    config: function(eleventyConfig) {
-      eleventyConfig.addPlugin(bundlePlugin);
+    config: function($config) {
+      $config.on("eleventy.beforeConfig", () => {
+        // runs after bundler included with core
+        $config.addPlugin(bundlePlugin, { force: true, immediate: true });
+      });
 
-      eleventyConfig.addTemplate('test.njk', `<div></div><style>{% getBundle "css" %}</style>
+      $config.addTemplate('test.njk', `<div></div><style>{% getBundle "css" %}</style>
 {%- css %}            {% endcss %}`)
     }
   });
