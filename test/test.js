@@ -900,3 +900,36 @@ test("Programmatic bundle plucked Issue #25", async (t) => {
   t.is(results[0].content, `Index<style>/* Generated Bundle */* { color: red }</style>`);
 });
 
+test("Regression <script src=''> removed (webc bundles side loaded)", async (t) => {
+  let elev = new Eleventy("./test/stubs-virtual/", undefined, {
+    config: $config => {
+      // see testing note at the top of this file
+      $config.on("eleventy.beforeConfig", () => {
+        $config.addPlugin(bundlePlugin, { bundles: "js", force: true, immediate: true });
+      });
+
+      $config.addTemplate("index.njk", `Test<script src="/js/eleventy.js" type="module"></script>`);
+    }
+  });
+
+  let results = await elev.toJSON();
+  t.is(results.length, 1);
+  t.is(results[0].content, `Test<script src="/js/eleventy.js" type="module"></script>`);
+});
+
+test("Regression <script src> removed (webc bundles side loaded)", async (t) => {
+  let elev = new Eleventy("./test/stubs-virtual/", undefined, {
+    config: $config => {
+      // see testing note at the top of this file
+      $config.on("eleventy.beforeConfig", () => {
+        $config.addPlugin(bundlePlugin, { bundles: "js", force: true, immediate: true });
+      });
+
+      $config.addTemplate("index.njk", `Test<script src type="module"></script>`);
+    }
+  });
+
+  let results = await elev.toJSON();
+  t.is(results.length, 1);
+  t.is(results[0].content, `Test<script src type="module"></script>`);
+});

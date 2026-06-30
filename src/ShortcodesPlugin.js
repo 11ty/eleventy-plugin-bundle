@@ -62,10 +62,11 @@ export default function($config, pluginOptions = {}) {
 		let nonDelayedManager = Object.values(managers).find(manager => {
 			return typeof manager.isDelayed !== "function" || !manager.isDelayed();
 		});
-		if(Boolean(nonDelayedManager)) {
-			return bundleTransform.call(this, content, 0);
+
+		if(!Boolean(nonDelayedManager)) {
+			return content;
 		}
-		return content;
+		return bundleTransform.call(this, content, 0);
 	});
 
 	// We use addplugin here so the delayed transform adds after the HTML Transformer API
@@ -76,10 +77,12 @@ export default function($config, pluginOptions = {}) {
 			let delayedManager = Object.values(managers).find(manager => {
 				return typeof manager.isDelayed === "function" && manager.isDelayed();
 			});
-			if(Boolean(delayedManager)) {
-				return bundleTransform.call(this, content, 1);
+
+			if(!Boolean(delayedManager)) {
+				return content;
 			}
-			return content;
+
+			return bundleTransform.call(this, content, 1);
 		});
 	});
 };

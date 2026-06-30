@@ -89,7 +89,6 @@ export default function eleventyPruneEmptyBundles(eleventyConfig, options = {}) 
 			return function (tree) {
 				let managers = eleventyConfig.getBundleManagers();
 				tree.match(matchHelper(options.pruneEmptySelector), function (node) {
-
 					if(node.attrs && node.attrs[ATTRS.keep] !== undefined) {
 						delete node.attrs[ATTRS.keep];
 						return node;
@@ -111,7 +110,8 @@ export default function eleventyPruneEmptyBundles(eleventyConfig, options = {}) 
 						}
 
 						let content = getTextNodeContent(node);
-						if(node.tag === "script") {
+
+						if(node.tag === "script" && node.attrs?.src === undefined) {
 							// <script></script> or <script>EMPTY BUNDLE ASSET KEY</script>
 							if(!content || hasEmptyBundle(content, context, managers)) {
 								return false;

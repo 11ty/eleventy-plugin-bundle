@@ -97,8 +97,8 @@ export default function eleventyBundleManagers(eleventyConfig, pluginOptions = {
 	};
 
 	eleventyConfig.on("eleventy.before", async () => {
-		for(let key in managers) {
-			managers[key].reset();
+		for(let manager of Object.values(managers)) {
+			manager.reset();
 		}
 	});
 };
