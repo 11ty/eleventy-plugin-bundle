@@ -33,7 +33,6 @@ export function addHtmlPlucker(eleventyConfig, bundleManager) {
 			return function (tree) {
 				tree.match(matchHelper(matchSelector), function (node) {
 					try {
-						// ignore
 						if(hasAttribute(node, ATTRS.ignore)) {
 							delete node.attrs[ATTRS.ignore];
 							return node;

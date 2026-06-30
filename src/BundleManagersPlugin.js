@@ -1,6 +1,6 @@
 import { createDebug } from "obug";
 import { CodeManager } from "./CodeManager.js";
-import { addHtmlPlucker } from "./BundlePluckerPlugin.js"
+import { addHtmlPlucker } from "./BundlePlucker.js"
 
 const debug = createDebug("Eleventy:Bundle");
 
