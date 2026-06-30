@@ -16,8 +16,8 @@ function generateManager(name, bundleOptions = {}) {
 	}
 
 	if(bundleOptions.bundleHtmlContentFromSelector !== undefined) {
+		// must happen after setDelayed above (overrides value)
 		manager.setPluckedSelector(bundleOptions.bundleHtmlContentFromSelector);
-		manager.setDelayed(true); // must override `delayed` above
 	}
 
 	if(bundleOptions.bundleExportKey !== undefined) {
@@ -48,9 +48,13 @@ export default function eleventyBundleManagers(eleventyConfig, pluginOptions = {
 	let managers = {};
 	eleventyConfig.addBundle = function addBundle(name, bundleOptions = {}) {
 		let manager;
-		if(typeof name === "function" && name.constructor.name === "CodeManager") {
+		let isCodeManagerInstance = name?.constructor?.name === "CodeManager";
+
+		if(isCodeManagerInstance) {
 			manager = name;
-			managers[manager.name] === manager;
+			name = manager.name;
+
+			managers[name] = manager;
 		} else if(typeof name === "string") {
 			if(name in managers) {
 				// note: shortcode must still be added
@@ -62,12 +66,12 @@ export default function eleventyBundleManagers(eleventyConfig, pluginOptions = {
 			}
 		}
 
-		if(manager && bundleOptions.bundleHtmlContentFromSelector !== undefined) {
+		if(manager && manager.getPluckedSelector()) {
 			addHtmlPlucker(eleventyConfig, manager);
 		}
 
 		// if undefined, defaults to `name`
-		if(bundleOptions.shortcodeName !== false) {
+		if(isCodeManagerInstance || bundleOptions.shortcodeName !== false) {
 			let shortcodeName = bundleOptions.shortcodeName || name;
 
 			// e.g. `css` shortcode to add code to page bundle

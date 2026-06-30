@@ -775,22 +775,44 @@ test("getBundle and 11ty.js Issue #26", async (t) => {
   t.is(results[0].content, `Index<style>/* Generated Bundle */* { color: red }</style>`);
 });
 
-// TODO fix
-test.skip("Programmatic bundle Issue #25", async (t) => {
+test("Programmatic bundle Issue #25", async (t) => {
   let cssBundle = new Bundle("css");
-  cssBundle.setPluckedSelector("style")
 
   let elev = new Eleventy("./test/stubs-virtual/", undefined, {
     config: $config => {
       // see testing note at the top of this file
       $config.on("eleventy.beforeConfig", () => {
         $config.addPlugin(bundlePlugin, { bundles: false, force: true, immediate: true });
-
         $config.addBundle(cssBundle);
       });
 
-      $config.addTemplate("index.11ty.js", function() {
-        return `Index<style>* { color: red }</style><style>/* Generated Bundle */${this.getBundle("css")}</style>`;
+      $config.addTemplate("index.11ty.js", async function() {
+        return `Index${this.css("* { color: red }")}<style>/* Generated Bundle */${this.getBundle("css")}</style>`;
+      });
+    }
+  });
+
+  let results = await elev.toJSON();
+  t.is(results.length, 1);
+  t.is(results[0].content, `Index<style>/* Generated Bundle */* { color: red }</style>`);
+});
+
+test("Programmatic bundle plucked Issue #25", async (t) => {
+  let cssBundle = new Bundle("css");
+	// also sets delayed
+  cssBundle.setPluckedSelector("style");
+
+  let elev = new Eleventy("./test/stubs-virtual/", undefined, {
+    config: $config => {
+      // see testing note at the top of this file
+      $config.on("eleventy.beforeConfig", () => {
+        $config.addPlugin(bundlePlugin, { bundles: false, force: true, immediate: true });
+        $config.addBundle(cssBundle);
+      });
+
+      $config.addTemplate("index.11ty.js", async function() {
+				let bundleOutput = this.getBundle("css");
+        return `Index${this.css("* { color: red }")}<style>/* Generated Bundle */${bundleOutput}</style>`;
       });
     }
   });

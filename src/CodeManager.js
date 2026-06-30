@@ -18,7 +18,7 @@ export class CodeManager {
 		this.reset();
 		this.transforms = [];
 		this.isHoisting = true;
-		this.fileExtension = undefined;
+		this.fileExtension = name;
 		this.toFileDirectory = undefined;
 		this.bundleExportKey = "bundle";
 		this.runsAfterHtmlTransformer = false;
@@ -36,6 +36,7 @@ export class CodeManager {
 	// posthtml-match-selector friendly
 	setPluckedSelector(selector) {
 		this.pluckedSelector = selector;
+		this.setDelayed(Boolean(selector));
 	}
 
 	getPluckedSelector() {
