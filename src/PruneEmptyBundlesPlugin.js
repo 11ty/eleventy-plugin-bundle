@@ -50,14 +50,26 @@ function hasEmptyBundle(bundleAssetKey, context, bundleManagers) {
 	return false;
 }
 
+function getSelector(managers = {}) {
+	// Backwards compatibility with v4.0.1 and older: if code manager doesn’t have this function (old version)
+	if(Object.values(managers).find(manager => {
+		return typeof manager.getPruneEmptySelector !== "function";
+	})) {
+		return `style,script,link[rel="stylesheet"]`;
+	}
+
+	return Object.values(managers).map(manager => {
+		return manager.getPruneEmptySelector();
+	}).filter(Boolean).join(",");
+}
+
 export default function eleventyPruneEmptyBundles(eleventyConfig, options = {}) {
 	if(!eleventyConfig.htmlTransformer || !eleventyConfig.htmlTransformer?.constructor?.SUPPORTS_PLUGINS_ENABLED_CALLBACK) {
 		debug("You will need to upgrade your version of Eleventy core to remove empty bundle tags automatically (v3 or newer).");
 		return;
 	}
 
-	// Right now empty bundle nodes are removed if the final bundles are empty. Use `false` to disable
-	options.pruneEmptySelector = options.pruneEmptySelector ?? `style,script,link[rel="stylesheet"]`;
+	// v4.0.2 moved selector configuration into individual Code Manager Bundles via CodeManager->getPruneEmptySelector
 
 	// Subsequent call can remove a previously added `addPosthtmlPlugin` entry
 	// htmlTransformer.remove is v3.0.1-alpha.4+
@@ -73,11 +85,6 @@ export default function eleventyPruneEmptyBundles(eleventyConfig, options = {}) 
 		});
 	}
 
-	// `false` disables this plugin
-	if(options.pruneEmptySelector === false) {
-		return;
-	}
-
 	eleventyConfig.htmlTransformer.addPosthtmlPlugin(
 		"html",
 		function bundlePruneEmptyPosthtmlPlugin(context = {}) {
@@ -88,7 +95,12 @@ export default function eleventyPruneEmptyBundles(eleventyConfig, options = {}) 
 
 			return function (tree) {
 				let managers = eleventyConfig.getBundleManagers();
-				tree.match(matchHelper(options.pruneEmptySelector), function (node) {
+				let selector = getSelector(managers);
+				if(!selector) {
+					return;
+				}
+
+				tree.match(matchHelper(selector), function (node) {
 					if(node.attrs && node.attrs[ATTRS.keep] !== undefined) {
 						delete node.attrs[ATTRS.keep];
 						return node;
@@ -139,7 +151,7 @@ export default function eleventyPruneEmptyBundles(eleventyConfig, options = {}) 
 
 			// the `enabled` callback for plugins is available on v3.0.0-alpha.20+ and v3.0.0-beta.2+
 			enabled: () => {
-				return Object.keys(eleventyConfig.getBundleManagers()).length > 0;
+				return options.pruneEmptySelector !== false && Boolean(getSelector(eleventyConfig.getBundleManagers()));
 			}
 		}
 	);

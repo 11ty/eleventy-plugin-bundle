@@ -23,6 +23,14 @@ export class CodeManager {
 		this.bundleExportKey = "bundle";
 		this.runsAfterHtmlTransformer = false;
 		this.pluckedSelector = undefined;
+
+		if(name === "js") {
+			this.pruneEmptySelector = "script";
+		} else if(name === "css") {
+			this.pruneEmptySelector = `style,link[rel="stylesheet"]`;
+		} else {
+			this.pruneEmptySelector = undefined;
+		}
 	}
 
 	setDelayed(isDelayed) {
@@ -41,6 +49,14 @@ export class CodeManager {
 
 	getPluckedSelector() {
 		return this.pluckedSelector;
+	}
+
+	setPruneEmptySelector(selector) {
+		this.pruneEmptySelector = selector;
+	}
+
+	getPruneEmptySelector() {
+		return this.pruneEmptySelector;
 	}
 
 	setFileExtension(ext) {

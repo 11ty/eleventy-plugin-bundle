@@ -602,10 +602,10 @@ test("Empty CSS bundle (trimmed) removes empty <style> tag", async t => {
 
 test("Empty JS bundle (trimmed) removes empty <script> tag", async t => {
   let elev = new Eleventy("test/stubs-virtual/", "_site", {
-    config: function(eleventyConfig) {
-      eleventyConfig.addPlugin(bundlePlugin);
+    config: function($config) {
+      $config.addPlugin(bundlePlugin);
 
-      eleventyConfig.addTemplate('test.njk', `<div></div><script>{% getBundle "css" %}</script>
+      $config.addTemplate('test.njk', `<div></div><script>{% getBundle "js" %}</script>
 {%- js %}            {% endjs %}`)
     }
   });
@@ -613,12 +613,37 @@ test("Empty JS bundle (trimmed) removes empty <script> tag", async t => {
   t.deepEqual(normalize(results[0].content), `<div></div>`)
 });
 
+test("Empty JS bundle opt-out of trimmed empty <script> tag", async t => {
+  let elev = new Eleventy("test/stubs-virtual/", "_site", {
+    config: function($config) {
+      $config.on("eleventy.beforeConfig", () => {
+        $config.addPlugin(bundlePlugin, {
+					force: true,
+					immediate: true,
+          bundles: false,
+        });
+
+        let jsBundle = new Bundle("js");
+        jsBundle.setPruneEmptySelector(false);
+        $config.addBundle(jsBundle);
+      });
+
+      $config.addTemplate('test.njk', `<div></div><script>{% getBundle "js" %}</script>
+{%- js %}            {% endjs %}`)
+    }
+  });
+  let results = await elev.toJSON();
+  t.deepEqual(normalize(results[0].content), `<div></div><script></script>`)
+});
+
 test("Empty CSS bundle (trimmed) removes empty <link rel=stylesheet> tag", async t => {
   let elev = new Eleventy("test/stubs-virtual/", "_site", {
-    config: function(eleventyConfig) {
-      eleventyConfig.addPlugin(bundlePlugin);
+    config: function($config) {
+      $config.addPlugin(bundlePlugin, {
+        force: true,
+      });
 
-      eleventyConfig.addTemplate('test.njk', `<div></div><link rel="stylesheet" href="{% getBundleFileUrl "css" %}">
+      $config.addTemplate('test.njk', `<div></div><link rel="stylesheet" href="{% getBundleFileUrl "css" %}">
 {%- css %}            {% endcss %}`)
     }
   });
@@ -626,11 +651,41 @@ test("Empty CSS bundle (trimmed) removes empty <link rel=stylesheet> tag", async
   t.deepEqual(normalize(results[0].content), `<div></div>`)
 });
 
+test("Empty CSS bundle opt-out of trimmed empty <style> tag", async t => {
+  let elev = new Eleventy("test/stubs-virtual/", "_site", {
+    config: function($config) {
+      $config.on("eleventy.beforeConfig", () => {
+        $config.addPlugin(bundlePlugin, {
+					force: true,
+					immediate: true,
+          bundles: false,
+        });
+
+        let cssBundle = new Bundle("css");
+        cssBundle.setPruneEmptySelector(false);
+        $config.addBundle(cssBundle);
+      });
+
+      $config.addTemplate('test.njk', `<div></div><style>{% getBundle "css" %}</style>
+{%- css %}            {% endcss %}`)
+    }
+  });
+  let results = await elev.toJSON();
+  t.deepEqual(normalize(results[0].content), `<div></div><style></style>`)
+});
+
 // This requires `htmlTransformer.remove` which is core v3.0.1-alpha.4+
 test("Empty CSS bundle (trimmed) does *not* remove empty <style> tag", async t => {
   let elev = new Eleventy("test/stubs-virtual/", "_site", {
-    // See testing note at top of this file
-    configPath: "test/stubs/no-prune/eleventy.config.js",
+    config: function($config) {
+      $config.addPlugin(bundlePlugin, {
+        pruneEmptySelector: false,
+        force: true,
+      });
+
+      $config.addTemplate('test.njk', `<div></div><style>{% getBundle "css" %}</style>
+{%- css %}            {% endcss %}`);
+    }
   });
   let results = await elev.toJSON();
   t.deepEqual(normalize(results[0].content), `<div></div><style></style>`)
@@ -705,8 +760,27 @@ body { color: blue }</style>`)
 });
 
 test("<script> plucked into bundle (and transforms)", async t => {
-  let elev = new Eleventy("test/stubs/pluck-html-js/", "_site", {
-    configPath: "test/stubs/pluck-html-js/eleventy.config.js",
+  let elev = new Eleventy("test/stubs-virtual/", "_site", {
+    config: $config => {
+      $config.on("eleventy.beforeConfig", () => {
+        $config.addPlugin(bundlePlugin, {
+          force: true, // for testing
+          bundles: false,
+          immediate: true,
+        });
+
+        $config.addBundle("js", {
+          bundleHtmlContentFromSelector: "script",
+          transforms: [
+            function(content) {
+              return `/* Banner from Transforms */
+${content}`;
+            }
+          ]
+        })
+      });
+      $config.addTemplate("index.njk", `<script>/* Bundle one */</script><script>/* Bundle two */</script><div></div><script>{% getBundle "js" %}</script>`);
+    }
   });
 
   let results = await elev.toJSON();
@@ -877,7 +951,7 @@ test("Programmatic bundle Issue #25", async (t) => {
 
 test("Programmatic bundle plucked Issue #25", async (t) => {
   let cssBundle = new Bundle("css");
-	// also sets delayed
+  // also sets delayed
   cssBundle.setPluckedSelector("style");
 
   let elev = new Eleventy("./test/stubs-virtual/", undefined, {
@@ -889,7 +963,7 @@ test("Programmatic bundle plucked Issue #25", async (t) => {
       });
 
       $config.addTemplate("index.11ty.js", async function() {
-				let bundleOutput = this.getBundle("css");
+        let bundleOutput = this.getBundle("css");
         return `Index${this.css("* { color: red }")}<style>/* Generated Bundle */${bundleOutput}</style>`;
       });
     }
