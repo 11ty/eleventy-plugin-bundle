@@ -1,12 +1,20 @@
+import { randomBytes } from "node:crypto";
 import { createDebug } from "obug";
 
 const debug = createDebug("Eleventy:Bundle");
+
+// Generated once per process (i.e. once per build/serve run) so that page content
+// can never be authored in advance to coincidentally collide with a live placeholder.
+// See https://github.com/11ty/eleventy-plugin-bundle/issues/54
+const BUNDLE_TOKEN = randomBytes(12).toString("hex");
+const PREFIX = `<!--#BaBundle:${BUNDLE_TOKEN}:`;
+const PREFIX_NO_COMMENT = `#BaBundle:${BUNDLE_TOKEN}:`;
 
 /* This class defers any `bundleGet` calls to a post-build transform step,
  * to allow `getBundle` to be called before all of the `css` additions have been processed
  */
 export class OutOfOrderRender {
-	#regex = /((?:\<\!\-\-)#BaBundle:[^:]*:[^:]*:[^:]*:BaBundle#(?:\-\-\>))/;
+	#regex = new RegExp(`((?:\\<\\!\\-\\-)#BaBundle:${BUNDLE_TOKEN}:[^:]*:[^:]*:[^:]*:BaBundle#(?:\\-\\-\\>))`);
 
 	static SEPARATOR = ":";
 
@@ -23,12 +31,12 @@ export class OutOfOrderRender {
 		} else {
 			bucket = "";
 		}
-		return `<!--#BaBundle:${type}:${name}:${bucket || "default"}:BaBundle#-->`;
+		return `${PREFIX}${type}:${name}:${bucket || "default"}:BaBundle#-->`;
 	}
 
 	static parseAssetKey(str) {
-		if(str.startsWith("#BaBundle:") || str.startsWith("<!--#BaBundle:")) {
-			let [prefix, type, name, bucket, suffix] = str.split(OutOfOrderRender.SEPARATOR);
+		if(str.startsWith(PREFIX_NO_COMMENT) || str.startsWith(PREFIX)) {
+			let [prefix, token, type, name, bucket, suffix] = str.split(OutOfOrderRender.SEPARATOR);
 			return { type, name, bucket };
 		}
 		return false;
