@@ -6,7 +6,7 @@ const debug = createDebug("Eleventy:Bundle");
  * to allow `getBundle` to be called before all of the `css` additions have been processed
  */
 export class OutOfOrderRender {
-	#regex = /((?:\<\!\-\-)#BaBundle:[^:]*:[^:]*:[^:]*:BaBundle#(?:\-\-\>))/;
+	#regex = /(\<\!\-\-#BaBundle:[^:]*:[^:]*:[^:]*:BaBundle#\-\-\>|#BaBundle:[^:]*:[^:]*:[^:]*:BaBundle#)/;
 
 	static SEPARATOR = ":";
 
@@ -23,7 +23,10 @@ export class OutOfOrderRender {
 		} else {
 			bucket = "";
 		}
-		return `<!--#BaBundle:${type}:${name}:${bucket || "default"}:BaBundle#-->`;
+
+		let key = `#BaBundle:${type}:${name}:${bucket || "default"}:BaBundle#`;
+		// `file` urls are used in attributes (e.g. `src`), where an HTML comment would break parsing
+		return type === "file" ? key : `<!--${key}-->`;
 	}
 
 	static parseAssetKey(str) {

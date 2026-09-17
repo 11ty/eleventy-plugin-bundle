@@ -1,8 +1,9 @@
 import test from "ava";
 import fs from "fs";
-import Eleventy, { RenderPlugin } from "@11ty/eleventy";
+import Eleventy, { RenderPlugin, InputPathToUrlTransformPlugin } from "@11ty/eleventy";
 import * as sass from "sass";
 import bundlePlugin, { Bundle } from "../src/BundlePlugin.js";
+import { OutOfOrderRender } from "../src/OutOfOrderRender.js";
 
 // Use this when core v4.0.0-alpha.9 is released
 // process.env.ELEVENTY_SKIP_BUNDLE_PLUGIN = true;
@@ -1006,4 +1007,45 @@ test("Regression <script src> removed (webc bundles side loaded)", async (t) => 
   let results = await elev.toJSON();
   t.is(results.length, 1);
   t.is(results[0].content, `Test<script src type="module"></script>`);
+});
+
+test("Asset keys: `get` is an HTML comment, `file` is a bare token", (t) => {
+  // `get` is swapped in as content, where the comment keeps Markdown from wrapping it in a <p> (Issue #31)
+  t.is(OutOfOrderRender.getAssetKey("get", "css"), `<!--#BaBundle:get:css:default:BaBundle#-->`);
+  // `file` becomes a URL in an attribute, where `<!--` would break HTML parsing
+  t.is(OutOfOrderRender.getAssetKey("file", "css"), `#BaBundle:file:css:default:BaBundle#`);
+
+  t.deepEqual(OutOfOrderRender.parseAssetKey(`<!--#BaBundle:get:css:default:BaBundle#-->`), { type: "get", name: "css", bucket: "default" });
+  t.deepEqual(OutOfOrderRender.parseAssetKey(`#BaBundle:file:css:default:BaBundle#`), { type: "file", name: "css", bucket: "default" });
+
+  let render = new OutOfOrderRender(`<style><!--#BaBundle:get:css:default:BaBundle#--></style><link href="#BaBundle:file:css:default:BaBundle#">`);
+  t.deepEqual(render.findAll(), [
+    `<style>`,
+    { type: "get", name: "css", bucket: "default" },
+    `</style><link href="`,
+    { type: "file", name: "css", bucket: "default" },
+    `">`,
+  ]);
+});
+
+test("getBundleFileUrl in an attribute survives a posthtml transform", async (t) => {
+  let elev = new Eleventy("./test/stubs-virtual/", undefined, {
+    config: $config => {
+      // see testing note at the top of this file
+      $config.on("eleventy.beforeConfig", () => {
+        $config.addPlugin(bundlePlugin, { bundles: false, force: true, immediate: true });
+        // delayed: the asset key is still on the page when the HTML Transformer API parses it
+        $config.addBundle("js", { delayed: true });
+      });
+
+      $config.addPlugin(InputPathToUrlTransformPlugin);
+
+      $config.addTemplate("index.liquid", `<!doctype html><html><head><script type="module" src="{% getBundleFileUrl "js" %}"></script></head><body><p>After</p></body></html>
+{% js %}alert("hi");{% endjs %}`);
+    }
+  });
+
+  let results = await elev.toJSON();
+  t.is(results.length, 1);
+  t.is(normalize(results[0].content), `<!doctype html><html><head><script type="module" src="/I-aF1T6Gxf.js"></script></head><body><p>After</p></body></html>`);
 });
