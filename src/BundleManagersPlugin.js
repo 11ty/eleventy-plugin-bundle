@@ -32,16 +32,8 @@ function generateManager(name, bundleOptions = {}) {
 		manager.setBundleDirectory(bundleOptions.toFileDirectory);
 	}
 
-	if(bundleOptions.autoOutput !== undefined) {
-		manager.setAutoOutput(bundleOptions.autoOutput, bundleOptions.autoOutputLocation);
-	}
-
-	if(bundleOptions.autoOutputMaxInlineSize !== undefined) {
-		manager.setAutoOutputMaxInlineSize(bundleOptions.autoOutputMaxInlineSize);
-	}
-
-	if(bundleOptions.autoOutputHtml !== undefined) {
-		manager.setAutoOutputHtml(bundleOptions.autoOutputHtml);
+	if(bundleOptions.inject !== undefined) {
+		manager.setInject(bundleOptions.inject);
 	}
 
 	if(bundleOptions.transforms) {

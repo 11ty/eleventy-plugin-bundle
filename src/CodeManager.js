@@ -11,7 +11,9 @@ export class CodeManager {
 	// code is hoisted to this bucket when necessary
 	static HOISTED_BUCKET_NAME = "default";
 
-	static AUTO_OUTPUT_LOCATIONS = ["<title>", "</head>", "<body>", "</body>"];
+	static INJECT_MODES = ["inline", "file", "size"];
+
+	static INJECT_LOCATIONS = ["<title>", "</head>", "<body>", "</body>"];
 
 	constructor(name) {
 		this.name = name;
@@ -25,10 +27,7 @@ export class CodeManager {
 		this.bundleExportKey = "bundle";
 		this.runsAfterHtmlTransformer = false;
 		this.pluckedSelector = undefined;
-		this.autoOutput = false;
-		this.autoOutputLocation = "</head>";
-		this.autoOutputHtml = undefined;
-		this.autoOutputMaxInlineSize = 4096;
+		this.injectOptions = false;
 
 		if(name === "js") {
 			this.pruneEmptySelector = "script";
@@ -85,48 +84,43 @@ export class CodeManager {
 		return this.bundleExportKey;
 	}
 
-	// mode is `inline` (or `true`), `file`, or `false`
-	setAutoOutput(mode, location = "</head>") {
-		if(mode === true) {
-			mode = "inline";
+	// `true` or a mode string is shorthand for `{ mode }`
+	setInject(options) {
+		if(!options) {
+			this.injectOptions = false;
+			return;
 		}
-		if(mode && mode !== "inline" && mode !== "file" && mode !== "size") {
-			throw new Error(`Invalid autoOutput value for bundle ${this.name}: ${mode}. Expected "inline", "file", "size", or false.`);
+		if(options === true) {
+			options = "inline";
 		}
-		if(!CodeManager.AUTO_OUTPUT_LOCATIONS.includes(location)) {
-			throw new Error(`Invalid autoOutputLocation for bundle ${this.name}: ${location}. Expected one of: ${CodeManager.AUTO_OUTPUT_LOCATIONS.join(", ")}`);
+		if(typeof options === "string") {
+			options = { mode: options };
+		}
+		if(typeof options !== "object" || Array.isArray(options)) {
+			throw new Error(`Invalid inject value for bundle ${this.name}: expected false, true, a mode string, or an object.`);
 		}
 
-		this.autoOutput = mode || false;
-		this.autoOutputLocation = location;
+		let { mode = "inline", location = "</head>", html, maxInlineSize = 4096 } = options;
+		if(!CodeManager.INJECT_MODES.includes(mode)) {
+			throw new Error(`Invalid inject mode for bundle ${this.name}: ${mode}. Expected one of: ${CodeManager.INJECT_MODES.join(", ")}`);
+		}
+		if(!CodeManager.INJECT_LOCATIONS.includes(location)) {
+			throw new Error(`Invalid inject location for bundle ${this.name}: ${location}. Expected one of: ${CodeManager.INJECT_LOCATIONS.join(", ")}`);
+		}
+		// Returns the tag HTML, with `%s` where the bundle content (`inline`) or URL (`file`) goes
+		if(html !== undefined && typeof html !== "function") {
+			throw new Error(`Invalid inject html for bundle ${this.name}: function expected.`);
+		}
+		// `size` mode inlines bundles up to this many bytes (after transforms), larger bundles are written to a file
+		if(!Number.isFinite(maxInlineSize) || maxInlineSize < 0) {
+			throw new Error(`Invalid inject maxInlineSize for bundle ${this.name}: ${maxInlineSize}. Expected a non-negative number of bytes.`);
+		}
+
+		this.injectOptions = { mode, location, html, maxInlineSize };
 	}
 
-	// Callback returns the tag HTML, with `%s` where the bundle content (`inline`) or URL (`file`) goes
-	setAutoOutputHtml(callback) {
-		if(callback !== undefined && typeof callback !== "function") {
-			throw new Error(`Invalid autoOutputHtml for bundle ${this.name}: function expected.`);
-		}
-		this.autoOutputHtml = callback;
-	}
-
-	// `size` mode inlines bundles up to this many bytes (after transforms), larger bundles are written to a file
-	setAutoOutputMaxInlineSize(bytes) {
-		if(!Number.isFinite(bytes) || bytes < 0) {
-			throw new Error(`Invalid autoOutputMaxInlineSize for bundle ${this.name}: ${bytes}. Expected a non-negative number of bytes.`);
-		}
-		this.autoOutputMaxInlineSize = bytes;
-	}
-
-	getAutoOutput() {
-		if(!this.autoOutput) {
-			return false;
-		}
-		return {
-			mode: this.autoOutput,
-			location: this.autoOutputLocation,
-			html: this.autoOutputHtml,
-			maxInlineSize: this.autoOutputMaxInlineSize,
-		};
+	getInject() {
+		return this.injectOptions;
 	}
 
 	reset() {

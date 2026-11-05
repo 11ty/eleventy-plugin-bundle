@@ -64,17 +64,8 @@ export default function(eleventyConfig) {
 		bundleExportKey: "bundle",
 		// bundleExportKey: false, // disable this feature.
 
-		// (Optional) Add the bundle to every page automatically: "inline", "file", "size", or false (default)
-		autoOutput: false,
-
-		// (Optional) Where autoOutput goes: "<title>", "</head>" (default), "<body>", or "</body>"
-		autoOutputLocation: "</head>",
-
-		// (Optional) Return the autoOutput tag HTML, `%s` is replaced with the bundle content (`inline`) or URL (`file`)
-		autoOutputHtml: undefined,
-
-		// (Optional) With autoOutput "size", bundles up to this many bytes are inlined, larger ones are written to a file
-		autoOutputMaxInlineSize: 4096,
+		// (Optional) Add the bundle to every page automatically, see Inject bundles below
+		inject: false,
 	});
 };
 ```
@@ -145,27 +136,38 @@ Writes the bundle content to a content-hashed file location in your output direc
 
 > **NOTE:** Writing bundles to files will likely be slower for empty-cache first time visitors but better cached in the browser for repeat-views (and across multiple pages, too).
 
-### Automatic output
+### Inject bundles
 
-Use `autoOutput` to add a bundle to pages without a `getBundle` or `getBundleFileUrl` call, useful for plugins that ship their own CSS or JS.
+Use `inject` to add a bundle to pages without a `getBundle` or `getBundleFileUrl` call, useful for plugins that ship their own CSS or JS.
 
 ```js
+// Shorthand: true (same as "inline"), "inline", "file", or "size"
+eleventyConfig.addBundle("css", { inject: "inline" });
+
+// Full options
 eleventyConfig.addBundle("css", {
-	autoOutput: "inline", // <style>…</style>
-	// autoOutput: "file", // <link rel="stylesheet" href="…">
-	// autoOutput: "size", // inline up to `autoOutputMaxInlineSize` bytes (default 4096), file otherwise
-	autoOutputLocation: "</head>",
-	// (Optional) Customize the tag
-	// autoOutputHtml: ({ mode, name }) => `<style media="print">%s</style>`,
+	inject: {
+		// "inline" (default) <style>…</style>, "file" <link rel="stylesheet" href="…">, or "size"
+		mode: "inline",
+
+		// "<title>", "</head>" (default), "<body>", or "</body>"
+		location: "</head>",
+
+		// (Optional) Return the tag HTML, `%s` is replaced with the bundle content (`inline`) or URL (`file`)
+		html: ({ mode, name }) => `<style media="print">%s</style>`,
+
+		// With "size", bundles up to this many bytes are inlined, larger ones are written to a file
+		maxInlineSize: 4096,
+	},
 });
 ```
 
 * `"</head>"` and `"</body>"` insert before the closing tag, `"<body>"` inserts after the opening tag, and `"<title>"` inserts after the `<title>` element.
-* Default markup is chosen by file extension: `css` uses `<style>` or `<link>`, `js` uses `<script type="module">`, and anything else is inlined as-is (`file` requires `css`, `js`, or an `autoOutputHtml` callback).
-* `autoOutputHtml` replaces the default markup; put `%s` where the bundle content or URL belongs. With `"size"`, its `mode` argument is the chosen `"inline"` or `"file"`.
+* Default markup is chosen by file extension: `css` uses `<style>` or `<link>`, `js` uses `<script type="module">`, and anything else is inlined as-is (`file` requires `css`, `js`, or an `html` callback).
+* `html` replaces the default markup; put `%s` where the bundle content or URL belongs. With `"size"`, its `mode` argument is the chosen `"inline"` or `"file"`.
 * `"size"` measures the bundle after `transforms`, per page.
 * Only the `default` bucket is output, and nothing is added if it’s empty or the page already references it via `getBundle` or `getBundleFileUrl`.
-* Disable a plugin’s automatic output in your config with `eleventyConfig.getBundleManagers()["my-plugin-bundle"].setAutoOutput(false)`.
+* Disable a plugin’s injection in your config with `eleventyConfig.getBundleManagers()["my-plugin-bundle"].setInject(false)`.
 
 ### Asset bucketing
 

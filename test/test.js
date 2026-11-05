@@ -1068,7 +1068,7 @@ test("getBundleFileUrl in an attribute survives a posthtml transform", async () 
   assert.equal(normalize(results[0].content), `<!doctype html><html><head><script type="module" src="/I-aF1T6Gxf.js"></script></head><body><p>After</p></body></html>`);
 });
 
-async function getAutoOutputResult(bundleOptions, template) {
+async function getInjectResult(bundleOptions, template) {
   let elev = new Eleventy("./test/stubs-virtual/", undefined, {
     config: $config => {
       // see testing note at the top of this file
@@ -1086,10 +1086,10 @@ async function getAutoOutputResult(bundleOptions, template) {
   return normalize(results[0].content);
 }
 
-const AUTO_OUTPUT_PAGE = `<!doctype html><html><head><meta charset="utf-8"><title>Title</title></head><body class="b"><p>Hi</p></body></html>
+const INJECT_PAGE = `<!doctype html><html><head><meta charset="utf-8"><title>Title</title></head><body class="b"><p>Hi</p></body></html>
 {% css %}* { color: red; }{% endcss %}`;
 
-test("autoOutput inline at each location (Issue #53)", async () => {
+test("inject inline at each location (Issue #53)", async () => {
   let expected = {
     "<title>": `<!doctype html><html><head><meta charset="utf-8"><title>Title</title><style>* { color: red; }</style></head><body class="b"><p>Hi</p></body></html>`,
     "</head>": `<!doctype html><html><head><meta charset="utf-8"><title>Title</title><style>* { color: red; }</style></head><body class="b"><p>Hi</p></body></html>`,
@@ -1098,106 +1098,103 @@ test("autoOutput inline at each location (Issue #53)", async () => {
   };
 
   for(let location in expected) {
-    let content = await getAutoOutputResult({ name: "css", autoOutput: "inline", autoOutputLocation: location }, AUTO_OUTPUT_PAGE);
+    let content = await getInjectResult({ name: "css", inject: { location } }, INJECT_PAGE);
     assert.equal(content, expected[location], location);
   }
 });
 
-test("autoOutput defaults to </head> (Issue #53)", async () => {
-  let content = await getAutoOutputResult({ name: "css", autoOutput: true }, AUTO_OUTPUT_PAGE);
+test("inject defaults to </head> (Issue #53)", async () => {
+  let content = await getInjectResult({ name: "css", inject: true }, INJECT_PAGE);
   assert.equal(content, `<!doctype html><html><head><meta charset="utf-8"><title>Title</title><style>* { color: red; }</style></head><body class="b"><p>Hi</p></body></html>`);
 });
 
-test("autoOutput file (Issue #53)", async () => {
-  let content = await getAutoOutputResult({ name: "js", autoOutput: "file", autoOutputLocation: "</body>" }, `<!doctype html><html><head></head><body><p>Hi</p></body></html>
+test("inject file (Issue #53)", async () => {
+  let content = await getInjectResult({ name: "js", inject: { mode: "file", location: "</body>" } }, `<!doctype html><html><head></head><body><p>Hi</p></body></html>
 {% js %}alert("hi");{% endjs %}`);
   assert.equal(content, `<!doctype html><html><head></head><body><p>Hi</p><script type="module" src="/I-aF1T6Gxf.js"></script></body></html>`);
 });
 
-test("autoOutput skipped when the page already uses getBundle (Issue #53)", async () => {
-  let content = await getAutoOutputResult({ name: "css", autoOutput: "inline" }, `<html><head></head><body><style>{% getBundle "css" %}</style></body></html>
+test("inject skipped when the page already uses getBundle (Issue #53)", async () => {
+  let content = await getInjectResult({ name: "css", inject: "inline" }, `<html><head></head><body><style>{% getBundle "css" %}</style></body></html>
 {% css %}* { color: red; }{% endcss %}`);
   assert.equal(content, `<html><head></head><body><style>* { color: red; }</style></body></html>`);
 });
 
-test("autoOutput skipped for empty bundles (Issue #53)", async () => {
-  let content = await getAutoOutputResult({ name: "css", autoOutput: "inline" }, `<html><head></head><body></body></html>`);
+test("inject skipped for empty bundles (Issue #53)", async () => {
+  let content = await getInjectResult({ name: "css", inject: "inline" }, `<html><head></head><body></body></html>`);
   assert.equal(content, `<html><head></head><body></body></html>`);
 });
 
-test("autoOutput rejects invalid options (Issue #53)", () => {
+test("inject rejects invalid options (Issue #53)", () => {
   let manager = new CodeManager("css");
-  assert.throws(() => manager.setAutoOutput("inline", "<header>"));
-  assert.throws(() => manager.setAutoOutput("external"));
+  assert.throws(() => manager.setInject({ location: "<header>" }));
+  assert.throws(() => manager.setInject("external"));
+  assert.throws(() => manager.setInject(["inline"]));
 });
 
-test("autoOutputHtml callback on inline and file output (Issue #53)", async () => {
-  let inline = await getAutoOutputResult({
+test("inject html callback on inline and file output (Issue #53)", async () => {
+  let inline = await getInjectResult({
     name: "js",
-    autoOutput: "inline",
-    autoOutputHtml: ({ mode, name }) => `<script type="module" data-mode="${mode}" data-name="${name}">%s</script>`,
+    inject: { html: ({ mode, name }) => `<script type="module" data-mode="${mode}" data-name="${name}">%s</script>` },
   }, `<html><head></head><body></body></html>
 {% js %}alert("hi");{% endjs %}`);
   assert.equal(inline, `<html><head><script type="module" data-mode="inline" data-name="js">alert("hi");</script></head><body></body></html>`);
 
-  let file = await getAutoOutputResult({
+  let file = await getInjectResult({
     name: "js",
-    autoOutput: "file",
-    autoOutputHtml: () => `<script type="module" src="%s" defer></script>`,
+    inject: { mode: "file", html: () => `<script type="module" src="%s" defer></script>` },
   }, `<html><head></head><body></body></html>
 {% js %}alert("hi");{% endjs %}`);
   assert.equal(file, `<html><head><script type="module" src="/I-aF1T6Gxf.js" defer></script></head><body></body></html>`);
 
   // Callback allows `file` output for extensions without built-in markup
-  let svg = await getAutoOutputResult({
+  let svg = await getInjectResult({
     name: "svg",
-    autoOutput: "file",
-    autoOutputHtml: () => `<link rel="preload" as="image" href="%s">`,
+    inject: { mode: "file", html: () => `<link rel="preload" as="image" href="%s">` },
   }, `<html><head></head><body></body></html>
 {% svg %}<svg></svg>{% endsvg %}`);
   assert.match(svg, /<link rel="preload" as="image" href="\/[^"]+\.svg"><\/head>/);
 });
 
-test("autoOutputHtml rejects non-functions and returns without %s (Issue #53)", async () => {
+test("inject html rejects non-functions and returns without %s (Issue #53)", async () => {
   let manager = new CodeManager("css");
-  assert.throws(() => manager.setAutoOutputHtml("<style></style>"));
+  assert.throws(() => manager.setInject({ html: "<style></style>" }));
 
-  await assert.rejects(getAutoOutputResult({ name: "css", autoOutput: "inline", autoOutputHtml: () => {} }, AUTO_OUTPUT_PAGE));
-  await assert.rejects(getAutoOutputResult({ name: "css", autoOutput: "inline", autoOutputHtml: () => "<style></style>" }, AUTO_OUTPUT_PAGE));
+  await assert.rejects(getInjectResult({ name: "css", inject: { html: () => {} } }, INJECT_PAGE));
+  await assert.rejects(getInjectResult({ name: "css", inject: { html: () => "<style></style>" } }, INJECT_PAGE));
 });
 
-test("autoOutput size inlines small bundles (Issue #53)", async () => {
-  let content = await getAutoOutputResult({ name: "css", autoOutput: "size" }, AUTO_OUTPUT_PAGE);
+test("inject size inlines small bundles (Issue #53)", async () => {
+  let content = await getInjectResult({ name: "css", inject: "size" }, INJECT_PAGE);
   assert.equal(content, `<!doctype html><html><head><meta charset="utf-8"><title>Title</title><style>* { color: red; }</style></head><body class="b"><p>Hi</p></body></html>`);
 });
 
-test("autoOutput size writes large bundles to a file (Issue #53)", async () => {
-  let content = await getAutoOutputResult({ name: "css", autoOutput: "size", autoOutputMaxInlineSize: 10 }, AUTO_OUTPUT_PAGE);
+test("inject size writes large bundles to a file (Issue #53)", async () => {
+  let content = await getInjectResult({ name: "css", inject: { mode: "size", maxInlineSize: 10 } }, INJECT_PAGE);
   assert.match(content, /<title>Title<\/title><link rel="stylesheet" href="\/[^"]+\.css"><\/head>/);
 });
 
-test("autoOutput size measures transformed content (Issue #53)", async () => {
-  let content = await getAutoOutputResult({
+test("inject size measures transformed content (Issue #53)", async () => {
+  let content = await getInjectResult({
     name: "js",
-    autoOutput: "size",
-    autoOutputMaxInlineSize: 20,
+    inject: { mode: "size", maxInlineSize: 20 },
     transforms: [content => `/* a long license comment */${content}`],
   }, `<html><head></head><body></body></html>
 {% js %}alert("hi");{% endjs %}`);
   assert.match(content, /<head><script type="module" src="\/[^"]+\.js"><\/script><\/head>/);
 });
 
-test("autoOutput size passes the chosen mode to autoOutputHtml (Issue #53)", async () => {
-  let autoOutputHtml = ({ mode }) => mode === "inline" ? `<style data-inline>%s</style>` : `<link rel="stylesheet" href="%s" data-file>`;
-  let inline = await getAutoOutputResult({ name: "css", autoOutput: "size", autoOutputHtml }, AUTO_OUTPUT_PAGE);
+test("inject size passes the chosen mode to inject html (Issue #53)", async () => {
+  let html = ({ mode }) => mode === "inline" ? `<style data-inline>%s</style>` : `<link rel="stylesheet" href="%s" data-file>`;
+  let inline = await getInjectResult({ name: "css", inject: { mode: "size", html } }, INJECT_PAGE);
   assert.match(inline, /<style data-inline>\* \{ color: red; \}<\/style>/);
 
-  let file = await getAutoOutputResult({ name: "css", autoOutput: "size", autoOutputMaxInlineSize: 0, autoOutputHtml }, AUTO_OUTPUT_PAGE);
+  let file = await getInjectResult({ name: "css", inject: { mode: "size", maxInlineSize: 0, html } }, INJECT_PAGE);
   assert.match(file, /<link rel="stylesheet" href="\/[^"]+\.css" data-file>/);
 });
 
-test("autoOutputMaxInlineSize rejects invalid values (Issue #53)", () => {
+test("inject maxInlineSize rejects invalid values (Issue #53)", () => {
   let manager = new CodeManager("css");
-  assert.throws(() => manager.setAutoOutputMaxInlineSize(-1));
-  assert.throws(() => manager.setAutoOutputMaxInlineSize("4kb"));
+  assert.throws(() => manager.setInject({ mode: "size", maxInlineSize: -1 }));
+  assert.throws(() => manager.setInject({ mode: "size", maxInlineSize: "4kb" }));
 });

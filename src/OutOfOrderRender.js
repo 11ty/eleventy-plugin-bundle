@@ -7,7 +7,7 @@ const NONCE_KEY = Symbol.for("@11ty/eleventy-plugin-bundle/nonce");
 globalThis[NONCE_KEY] ??= crypto.randomUUID().replaceAll("-", "").slice(0, 16);
 const PREFIX = `#BaBundle-${globalThis[NONCE_KEY]}`;
 
-const DEFAULT_AUTO_OUTPUT_HTML = {
+const DEFAULT_INJECT_HTML = {
 	css: { inline: `<style>%s</style>`, file: `<link rel="stylesheet" href="%s">` },
 	js: { inline: `<script type="module">%s</script>`, file: `<script type="module" src="%s"></script>` },
 };
@@ -26,7 +26,7 @@ export class OutOfOrderRender {
 		this.managers = {};
 	}
 
-	// type is `get` (return string), `file` (bundle writes to file, returns file url), or `auto` (autoOutput `size` markup)
+	// type is `get` (return string), `file` (bundle writes to file, returns file url), or `inject` (`size` mode markup)
 	static getAssetKey(type, name, bucket) {
 		if(Array.isArray(bucket)) {
 			bucket = bucket.join(",");
@@ -49,38 +49,38 @@ export class OutOfOrderRender {
 	}
 
 	// Returns tag HTML with a `%s` placeholder for `inline` or `file` mode
-	static getAutoOutputTemplate(manager, mode) {
-		let { html } = manager.getAutoOutput();
+	static getInjectTemplate(manager, mode) {
+		let { html } = manager.getInject();
 		let ext = manager.fileExtension;
 		let markup;
 
 		if(typeof html === "function") {
 			markup = html({ mode, name: manager.name });
 		} else {
-			markup = DEFAULT_AUTO_OUTPUT_HTML[ext]?.[mode] ?? (mode === "inline" ? "%s" : undefined);
+			markup = DEFAULT_INJECT_HTML[ext]?.[mode] ?? (mode === "inline" ? "%s" : undefined);
 			if(markup === undefined) {
-				throw new Error(`autoOutput: "${manager.getAutoOutput().mode}" requires a \`css\` or \`js\` file extension or an \`autoOutputHtml\` callback (bundle ${manager.name} uses ${ext}).`);
+				throw new Error(`inject: "${manager.getInject().mode}" requires a \`css\` or \`js\` file extension or an \`inject.html\` callback (bundle ${manager.name} uses ${ext}).`);
 			}
 		}
 
 		if(typeof markup !== "string" || !markup.includes("%s")) {
-			throw new Error(`autoOutputHtml for bundle ${manager.name} must return a string with a %s placeholder.`);
+			throw new Error(`inject.html for bundle ${manager.name} must return a string with a %s placeholder.`);
 		}
 
 		return markup;
 	}
 
-	static getAutoOutputMarkup(manager) {
-		let { mode } = manager.getAutoOutput();
+	static getInjectMarkup(manager) {
+		let { mode } = manager.getInject();
 		if(mode === "size") {
 			// Validate both templates now, the choice between them happens in `replaceAll` once the content size is known
-			OutOfOrderRender.getAutoOutputTemplate(manager, "inline");
-			OutOfOrderRender.getAutoOutputTemplate(manager, "file");
-			return OutOfOrderRender.getAssetKey("auto", manager.name);
+			OutOfOrderRender.getInjectTemplate(manager, "inline");
+			OutOfOrderRender.getInjectTemplate(manager, "file");
+			return OutOfOrderRender.getAssetKey("inject", manager.name);
 		}
 
 		let placeholder = OutOfOrderRender.getAssetKey(mode === "file" ? "file" : "get", manager.name);
-		return OutOfOrderRender.getAutoOutputTemplate(manager, mode).replaceAll("%s", () => placeholder);
+		return OutOfOrderRender.getInjectTemplate(manager, mode).replaceAll("%s", () => placeholder);
 	}
 
 	static insertAt(content, location, markup) {
@@ -104,7 +104,7 @@ export class OutOfOrderRender {
 		return content.slice(0, index) + markup + content.slice(index);
 	}
 
-	injectAutoOutput(pageData, stage) {
+	injectAll(pageData, stage) {
 		let referenced = new Set();
 		for(let match of this.findAll()) {
 			if(typeof match !== "string" && match.bucket.split(",").includes("default")) {
@@ -114,9 +114,9 @@ export class OutOfOrderRender {
 
 		for(let name in this.managers) {
 			let manager = this.managers[name];
-			// Older CodeManager copies (duplicate package installs) don’t support autoOutput
-			let autoOutput = typeof manager.getAutoOutput === "function" && manager.getAutoOutput();
-			if(!autoOutput || referenced.has(name)) {
+			// Older CodeManager copies (duplicate package installs) don’t support inject
+			let inject = typeof manager.getInject === "function" && manager.getInject();
+			if(!inject || referenced.has(name)) {
 				continue;
 			}
 
@@ -125,9 +125,9 @@ export class OutOfOrderRender {
 				continue;
 			}
 
-			let content = OutOfOrderRender.insertAt(this.content, autoOutput.location, OutOfOrderRender.getAutoOutputMarkup(manager));
+			let content = OutOfOrderRender.insertAt(this.content, inject.location, OutOfOrderRender.getInjectMarkup(manager));
 			if(content === false) {
-				debug("Skipping autoOutput for %o on %o: no %o found.", name, pageData.inputPath, autoOutput.location);
+				debug("Skipping inject for %o on %o: no %o found.", name, pageData.inputPath, inject.location);
 				continue;
 			}
 			this.content = content;
@@ -178,10 +178,10 @@ export class OutOfOrderRender {
 		return this.managers[name];
 	}
 
-	async getAutoOutputBySize(manager, pageData, bucket) {
+	async getInjectBySize(manager, pageData, bucket) {
 		let content = await manager.getForPage(pageData, bucket);
-		if(Buffer.byteLength(content) <= manager.getAutoOutput().maxInlineSize) {
-			return OutOfOrderRender.getAutoOutputTemplate(manager, "inline").replaceAll("%s", () => content);
+		if(Buffer.byteLength(content) <= manager.getInject().maxInlineSize) {
+			return OutOfOrderRender.getInjectTemplate(manager, "inline").replaceAll("%s", () => content);
 		}
 
 		let url = await manager.writeBundle(pageData, bucket, {
@@ -189,11 +189,11 @@ export class OutOfOrderRender {
 			write: this.writeToFileSystem,
 			content,
 		});
-		return OutOfOrderRender.getAutoOutputTemplate(manager, "file").replaceAll("%s", () => url);
+		return OutOfOrderRender.getInjectTemplate(manager, "file").replaceAll("%s", () => url);
 	}
 
 	async replaceAll(pageData, stage = 0) {
-		this.injectAutoOutput(pageData, stage);
+		this.injectAll(pageData, stage);
 
 		let matches = this.findAll();
 		let availableBucketsForPage = this.getAllBucketsForPage(pageData);
@@ -257,8 +257,8 @@ export class OutOfOrderRender {
 					output: this.outputDirectory,
 					write: this.writeToFileSystem,
 				});
-			} else if(type === "auto") {
-				return this.getAutoOutputBySize(manager, pageData, bucket);
+			} else if(type === "inject") {
+				return this.getInjectBySize(manager, pageData, bucket);
 			}
 
 			return "";
