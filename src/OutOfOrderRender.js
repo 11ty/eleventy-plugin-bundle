@@ -1,14 +1,21 @@
+import { randomBytes } from "node:crypto";
 import { createDebug } from "obug";
 
 const debug = createDebug("Eleventy:Bundle");
+
+// Per-process nonce so literal key text in page content is never treated as a placeholder; shared across duplicate copies of this package.
+const NONCE_KEY = Symbol.for("@11ty/eleventy-plugin-bundle/nonce");
+globalThis[NONCE_KEY] ??= randomBytes(8).toString("hex");
+const PREFIX = `#BaBundle-${globalThis[NONCE_KEY]}`;
 
 /* This class defers any `bundleGet` calls to a post-build transform step,
  * to allow `getBundle` to be called before all of the `css` additions have been processed
  */
 export class OutOfOrderRender {
-	#regex = /(\<\!\-\-#BaBundle:[^:]*:[^:]*:[^:]*:BaBundle#\-\-\>|#BaBundle:[^:]*:[^:]*:[^:]*:BaBundle#)/;
+	#regex = new RegExp(`(<!--${PREFIX}:[^:]*:[^:]*:[^:]*:BaBundle#-->|${PREFIX}:[^:]*:[^:]*:[^:]*:BaBundle#)`);
 
 	static SEPARATOR = ":";
+	static PREFIX = PREFIX;
 
 	constructor(content) {
 		this.content = content;
@@ -24,13 +31,13 @@ export class OutOfOrderRender {
 			bucket = "";
 		}
 
-		let key = `#BaBundle:${type}:${name}:${bucket || "default"}:BaBundle#`;
+		let key = `${PREFIX}:${type}:${name}:${bucket || "default"}:BaBundle#`;
 		// `file` urls are used in attributes (e.g. `src`), where an HTML comment would break parsing
 		return type === "file" ? key : `<!--${key}-->`;
 	}
 
 	static parseAssetKey(str) {
-		if(str.startsWith("#BaBundle:") || str.startsWith("<!--#BaBundle:")) {
+		if(str.startsWith(`${PREFIX}:`) || str.startsWith(`<!--${PREFIX}:`)) {
 			let [prefix, type, name, bucket, suffix] = str.split(OutOfOrderRender.SEPARATOR);
 			return { type, name, bucket };
 		}

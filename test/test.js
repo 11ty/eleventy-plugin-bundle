@@ -5,6 +5,7 @@ import Eleventy, { RenderPlugin, InputPathToUrlTransformPlugin } from "@11ty/ele
 import * as sass from "sass";
 import bundlePlugin, { Bundle } from "../src/BundlePlugin.js";
 import { OutOfOrderRender } from "../src/OutOfOrderRender.js";
+import { CodeManager } from "../src/CodeManager.js";
 
 // Use this when core v4.0.0-alpha.9 is released
 // process.env.ELEVENTY_SKIP_BUNDLE_PLUGIN = true;
@@ -1011,15 +1012,18 @@ test("Regression <script src> removed (webc bundles side loaded)", async () => {
 });
 
 test("Asset keys: `get` is an HTML comment, `file` is a bare token", () => {
+  let prefix = OutOfOrderRender.PREFIX;
+  assert.match(prefix, /^#BaBundle-[0-9a-f]{16}$/);
+
   // `get` is swapped in as content, where the comment keeps Markdown from wrapping it in a <p> (Issue #31)
-  assert.equal(OutOfOrderRender.getAssetKey("get", "css"), `<!--#BaBundle:get:css:default:BaBundle#-->`);
+  assert.equal(OutOfOrderRender.getAssetKey("get", "css"), `<!--${prefix}:get:css:default:BaBundle#-->`);
   // `file` becomes a URL in an attribute, where `<!--` would break HTML parsing
-  assert.equal(OutOfOrderRender.getAssetKey("file", "css"), `#BaBundle:file:css:default:BaBundle#`);
+  assert.equal(OutOfOrderRender.getAssetKey("file", "css"), `${prefix}:file:css:default:BaBundle#`);
 
-  assert.deepEqual(OutOfOrderRender.parseAssetKey(`<!--#BaBundle:get:css:default:BaBundle#-->`), { type: "get", name: "css", bucket: "default" });
-  assert.deepEqual(OutOfOrderRender.parseAssetKey(`#BaBundle:file:css:default:BaBundle#`), { type: "file", name: "css", bucket: "default" });
+  assert.deepEqual(OutOfOrderRender.parseAssetKey(`<!--${prefix}:get:css:default:BaBundle#-->`), { type: "get", name: "css", bucket: "default" });
+  assert.deepEqual(OutOfOrderRender.parseAssetKey(`${prefix}:file:css:default:BaBundle#`), { type: "file", name: "css", bucket: "default" });
 
-  let render = new OutOfOrderRender(`<style><!--#BaBundle:get:css:default:BaBundle#--></style><link href="#BaBundle:file:css:default:BaBundle#">`);
+  let render = new OutOfOrderRender(`<style><!--${prefix}:get:css:default:BaBundle#--></style><link href="${prefix}:file:css:default:BaBundle#">`);
   assert.deepEqual(render.findAll(), [
     `<style>`,
     { type: "get", name: "css", bucket: "default" },
@@ -1027,6 +1031,19 @@ test("Asset keys: `get` is an HTML comment, `file` is a bare token", () => {
     { type: "file", name: "css", bucket: "default" },
     `">`,
   ]);
+});
+
+test("Literal asset key text without the nonce is left alone (Issue #54)", async () => {
+  let manager = new CodeManager("css");
+  manager.addToPage("/page1/", "body { color: red; }");
+
+  let literal = `<!--#BaBundle:get:css:default:BaBundle#--> #BaBundle:file:css:default:BaBundle#`;
+  let render = new OutOfOrderRender(`<style>${OutOfOrderRender.getAssetKey("get", "css")}</style><p>${literal}</p>`);
+  render.setAssetManager("css", manager);
+  render.setWriteToFileSystem(false);
+
+  assert.equal(await render.replaceAll({ url: "/page1/" }), `<style>body { color: red; }</style><p>${literal}</p>`);
+  assert.equal(OutOfOrderRender.parseAssetKey(`<!--#BaBundle:get:css:default:BaBundle#-->`), false);
 });
 
 test("getBundleFileUrl in an attribute survives a posthtml transform", async () => {

@@ -1,6 +1,8 @@
 import { createDebug } from "obug";
 import matchHelper from "posthtml-match-helper";
 
+import { OutOfOrderRender } from "./OutOfOrderRender.js";
+
 const debug = createDebug("Eleventy:Bundle");
 
 const ATTRS = {
@@ -40,7 +42,7 @@ export function addHtmlPlucker(eleventyConfig, bundleManager) {
 
 						if(Array.isArray(node?.content) && node.content.length > 0) {
 							// TODO make this better decoupled
-							if(node?.content.find(entry => entry.includes(`__EleventyBundle:`) || entry.includes(`#BaBundle:`))) {
+							if(node?.content.find(entry => entry.includes(`__EleventyBundle:`) || entry.includes(OutOfOrderRender.PREFIX))) {
 								// preserve {% getBundle %} calls as-is
 								return node;
 							}
