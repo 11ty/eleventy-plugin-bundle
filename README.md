@@ -349,6 +349,8 @@ export default function(eleventyConfig) {
 };
 ```
 
+> **NOTE:** Code is bundled in the order it’s added, so content templates come before layouts. Order-sensitive code like CSS `@import` (which must come first) may need its own bucket.
+
 ## Advanced
 
 ### Limitations
