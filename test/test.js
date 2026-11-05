@@ -1114,6 +1114,25 @@ test("inject file (Issue #53)", async () => {
   assert.equal(content, `<!doctype html><html><head></head><body><p>Hi</p><script type="module" src="/I-aF1T6Gxf.js"></script></body></html>`);
 });
 
+test("inject missingLocation (Issue #53)", async () => {
+  let page = `<p>Hi</p>
+{% css %}* { color: red; }{% endcss %}`;
+  let expected = {
+    ignore: `<p>Hi</p>`,
+    append: `<p>Hi</p>\n<style>* { color: red; }</style>`,
+    prepend: `<style>* { color: red; }</style><p>Hi</p>`,
+  };
+
+  for(let missingLocation in expected) {
+    let content = await getInjectResult({ name: "css", inject: { missingLocation } }, page);
+    assert.equal(content, expected[missingLocation], missingLocation);
+  }
+
+  assert.equal(await getInjectResult({ name: "css", inject: true }, page), expected.ignore, "default");
+  await assert.rejects(getInjectResult({ name: "css", inject: { missingLocation: "error" } }, page));
+  assert.throws(() => new CodeManager("css").setInject({ missingLocation: "skip" }));
+});
+
 test("inject skipped when the page already uses getBundle (Issue #53)", async () => {
   let content = await getInjectResult({ name: "css", inject: "inline" }, `<html><head></head><body><style>{% getBundle "css" %}</style></body></html>
 {% css %}* { color: red; }{% endcss %}`);

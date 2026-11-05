@@ -15,6 +15,8 @@ export class CodeManager {
 
 	static INJECT_LOCATIONS = ["<title>", "</head>", "<body>", "</body>"];
 
+	static INJECT_MISSING_LOCATIONS = ["ignore", "error", "append", "prepend"];
+
 	constructor(name) {
 		this.name = name;
 		this.trimOnAdd = true;
@@ -100,12 +102,15 @@ export class CodeManager {
 			throw new Error(`Invalid inject value for bundle ${this.name}: expected false, true, a mode string, or an object.`);
 		}
 
-		let { mode = "inline", location = "</head>", html, maxInlineSize = 4096 } = options;
+		let { mode = "inline", location = "</head>", missingLocation = "ignore", html, maxInlineSize = 4096 } = options;
 		if(!CodeManager.INJECT_MODES.includes(mode)) {
 			throw new Error(`Invalid inject mode for bundle ${this.name}: ${mode}. Expected one of: ${CodeManager.INJECT_MODES.join(", ")}`);
 		}
 		if(!CodeManager.INJECT_LOCATIONS.includes(location)) {
 			throw new Error(`Invalid inject location for bundle ${this.name}: ${location}. Expected one of: ${CodeManager.INJECT_LOCATIONS.join(", ")}`);
+		}
+		if(!CodeManager.INJECT_MISSING_LOCATIONS.includes(missingLocation)) {
+			throw new Error(`Invalid inject missingLocation for bundle ${this.name}: ${missingLocation}. Expected one of: ${CodeManager.INJECT_MISSING_LOCATIONS.join(", ")}`);
 		}
 		// Returns the tag HTML, with `%s` where the bundle content (`inline`) or URL (`file`) goes
 		if(html !== undefined && typeof html !== "function") {
@@ -116,7 +121,7 @@ export class CodeManager {
 			throw new Error(`Invalid inject maxInlineSize for bundle ${this.name}: ${maxInlineSize}. Expected a non-negative number of bytes.`);
 		}
 
-		this.injectOptions = { mode, location, html, maxInlineSize };
+		this.injectOptions = { mode, location, missingLocation, html, maxInlineSize };
 	}
 
 	getInject() {

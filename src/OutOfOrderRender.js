@@ -125,10 +125,20 @@ export class OutOfOrderRender {
 				continue;
 			}
 
-			let content = OutOfOrderRender.insertAt(this.content, inject.location, OutOfOrderRender.getInjectMarkup(manager));
+			let markup = OutOfOrderRender.getInjectMarkup(manager);
+			let content = OutOfOrderRender.insertAt(this.content, inject.location, markup);
 			if(content === false) {
-				debug("Skipping inject for %o on %o: no %o found.", name, pageData.inputPath, inject.location);
-				continue;
+				let { missingLocation = "ignore" } = inject;
+				if(missingLocation === "error") {
+					throw new Error(`Could not inject bundle ${name} into ${pageData.inputPath}: no ${inject.location} found.`);
+				} else if(missingLocation === "append") {
+					content = this.content + markup;
+				} else if(missingLocation === "prepend") {
+					content = markup + this.content;
+				} else {
+					debug("Skipping inject for %o on %o: no %o found.", name, pageData.inputPath, inject.location);
+					continue;
+				}
 			}
 			this.content = content;
 		}

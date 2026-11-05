@@ -153,6 +153,9 @@ eleventyConfig.addBundle("css", {
 		// "<title>", "</head>" (default), "<body>", or "</body>"
 		location: "</head>",
 
+		// When `location` isn’t found: "ignore" (default), "error", "append", or "prepend"
+		missingLocation: "ignore",
+
 		// (Optional) Return the tag HTML, `%s` is replaced with the bundle content (`inline`) or URL (`file`)
 		html: ({ mode, name }) => `<style media="print">%s</style>`,
 
@@ -162,8 +165,7 @@ eleventyConfig.addBundle("css", {
 });
 ```
 
-* `"</head>"` and `"</body>"` insert before the closing tag, `"<body>"` inserts after the opening tag, and `"<title>"` inserts after the `<title>` element.
-* Default markup is chosen by file extension: `css` uses `<style>` or `<link>`, `js` uses `<script type="module">`, and anything else is inlined as-is (`file` requires `css`, `js`, or an `html` callback).
+* `"</head>"` and `"</body>"` insert before the closing tag, `"<body>"` inserts after the opening tag, and `"<title>"` inserts after the `<title>` element.* Default markup is chosen by file extension: `css` uses `<style>` or `<link>`, `js` uses `<script type="module">`, and anything else is inlined as-is (`file` requires `css`, `js`, or an `html` callback).
 * `html` replaces the default markup; put `%s` where the bundle content or URL belongs. With `"size"`, its `mode` argument is the chosen `"inline"` or `"file"`.
 * `"size"` measures the bundle after `transforms`, per page.
 * Only the `default` bucket is output, and nothing is added if it’s empty or the page already references it via `getBundle` or `getBundleFileUrl`.
