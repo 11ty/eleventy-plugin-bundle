@@ -4,6 +4,9 @@
 	"description": "Little bundles of code, little bundles of joy.",
 	"main": "src/BundlePlugin.js",
 	"type": "module",
+	"files": [
+		"src/"
+	],
 	"scripts": {
 		"sample": "DEBUG=Eleventy:Bundle npx @11ty/eleventy --config=sample/sample-config.js --input=sample --serve",
 		"test": "node --test \"test/*.js\""
