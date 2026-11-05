@@ -37,12 +37,12 @@
 	"devDependencies": {
 		"@11ty/eleventy": "^4.0.0-alpha.10",
 		"postcss": "^8.5.32",
-		"postcss-nested": "^7.0.2",
+		"postcss-nested": "^9.0.1",
 		"sass": "^1.107.1"
 	},
 	"dependencies": {
-		"@11ty/eleventy-utils": "^2.0.7",
-		"obug": "^2.2.1",
+		"@11ty/eleventy-utils": "^3.0.1",
+		"obug": "^3.0.0",
 		"posthtml-match-helper": "^2.0.3"
 	}
 }
