@@ -27,7 +27,8 @@ export class CodeManager {
 		this.pluckedSelector = undefined;
 		this.autoOutput = false;
 		this.autoOutputLocation = "</head>";
-		this.autoOutputAttributes = {};
+		this.autoOutputHtml = undefined;
+		this.autoOutputMaxInlineSize = 4096;
 
 		if(name === "js") {
 			this.pruneEmptySelector = "script";
@@ -89,8 +90,8 @@ export class CodeManager {
 		if(mode === true) {
 			mode = "inline";
 		}
-		if(mode && mode !== "inline" && mode !== "file") {
-			throw new Error(`Invalid autoOutput value for bundle ${this.name}: ${mode}. Expected "inline", "file", or false.`);
+		if(mode && mode !== "inline" && mode !== "file" && mode !== "size") {
+			throw new Error(`Invalid autoOutput value for bundle ${this.name}: ${mode}. Expected "inline", "file", "size", or false.`);
 		}
 		if(!CodeManager.AUTO_OUTPUT_LOCATIONS.includes(location)) {
 			throw new Error(`Invalid autoOutputLocation for bundle ${this.name}: ${location}. Expected one of: ${CodeManager.AUTO_OUTPUT_LOCATIONS.join(", ")}`);
@@ -100,12 +101,20 @@ export class CodeManager {
 		this.autoOutputLocation = location;
 	}
 
-	// `true` renders a boolean attribute, `false`/`null`/`undefined` omits it
-	setAutoOutputAttributes(attributes = {}) {
-		if(!attributes || typeof attributes !== "object" || Array.isArray(attributes)) {
-			throw new Error(`Invalid autoOutputAttributes for bundle ${this.name}: object expected.`);
+	// Callback returns the tag HTML, with `%s` where the bundle content (`inline`) or URL (`file`) goes
+	setAutoOutputHtml(callback) {
+		if(callback !== undefined && typeof callback !== "function") {
+			throw new Error(`Invalid autoOutputHtml for bundle ${this.name}: function expected.`);
 		}
-		this.autoOutputAttributes = attributes;
+		this.autoOutputHtml = callback;
+	}
+
+	// `size` mode inlines bundles up to this many bytes (after transforms), larger bundles are written to a file
+	setAutoOutputMaxInlineSize(bytes) {
+		if(!Number.isFinite(bytes) || bytes < 0) {
+			throw new Error(`Invalid autoOutputMaxInlineSize for bundle ${this.name}: ${bytes}. Expected a non-negative number of bytes.`);
+		}
+		this.autoOutputMaxInlineSize = bytes;
 	}
 
 	getAutoOutput() {
@@ -115,7 +124,8 @@ export class CodeManager {
 		return {
 			mode: this.autoOutput,
 			location: this.autoOutputLocation,
-			attributes: this.autoOutputAttributes,
+			html: this.autoOutputHtml,
+			maxInlineSize: this.autoOutputMaxInlineSize,
 		};
 	}
 
@@ -254,7 +264,7 @@ export class CodeManager {
 		buckets = CodeManager.normalizeBuckets(buckets);
 
 		// TODO the bundle output URL might be useful in the transforms for sourcemaps
-		let content = await this.getForPage(pageData, buckets);
+		let content = options.content ?? await this.getForPage(pageData, buckets);
 		let writer = new BundleFileOutput(output, this.toFileDirectory);
 		writer.setFileExtension(this.fileExtension);
 		return writer.writeBundle(content, this.name, write);

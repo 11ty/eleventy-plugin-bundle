@@ -1111,7 +1111,7 @@ test("autoOutput defaults to </head> (Issue #53)", async () => {
 test("autoOutput file (Issue #53)", async () => {
   let content = await getAutoOutputResult({ name: "js", autoOutput: "file", autoOutputLocation: "</body>" }, `<!doctype html><html><head></head><body><p>Hi</p></body></html>
 {% js %}alert("hi");{% endjs %}`);
-  assert.equal(content, `<!doctype html><html><head></head><body><p>Hi</p><script src="/I-aF1T6Gxf.js"></script></body></html>`);
+  assert.equal(content, `<!doctype html><html><head></head><body><p>Hi</p><script type="module" src="/I-aF1T6Gxf.js"></script></body></html>`);
 });
 
 test("autoOutput skipped when the page already uses getBundle (Issue #53)", async () => {
@@ -1131,21 +1131,73 @@ test("autoOutput rejects invalid options (Issue #53)", () => {
   assert.throws(() => manager.setAutoOutput("external"));
 });
 
-test("autoOutputAttributes on inline and file output (Issue #53)", async () => {
-  let inline = await getAutoOutputResult({ name: "js", autoOutput: "inline", autoOutputAttributes: { type: "module", nomodule: false, "data-x": `a"b` } }, `<html><head></head><body></body></html>
+test("autoOutputHtml callback on inline and file output (Issue #53)", async () => {
+  let inline = await getAutoOutputResult({
+    name: "js",
+    autoOutput: "inline",
+    autoOutputHtml: ({ mode, name }) => `<script type="module" data-mode="${mode}" data-name="${name}">%s</script>`,
+  }, `<html><head></head><body></body></html>
 {% js %}alert("hi");{% endjs %}`);
-  assert.equal(inline, `<html><head><script type="module" data-x="a&quot;b">alert("hi");</script></head><body></body></html>`);
+  assert.equal(inline, `<html><head><script type="module" data-mode="inline" data-name="js">alert("hi");</script></head><body></body></html>`);
 
-  let file = await getAutoOutputResult({ name: "js", autoOutput: "file", autoOutputAttributes: { type: "module", defer: true, src: "/ignored.js" } }, `<html><head></head><body></body></html>
+  let file = await getAutoOutputResult({
+    name: "js",
+    autoOutput: "file",
+    autoOutputHtml: () => `<script type="module" src="%s" defer></script>`,
+  }, `<html><head></head><body></body></html>
 {% js %}alert("hi");{% endjs %}`);
-  assert.equal(file, `<html><head><script type="module" defer src="/I-aF1T6Gxf.js"></script></head><body></body></html>`);
+  assert.equal(file, `<html><head><script type="module" src="/I-aF1T6Gxf.js" defer></script></head><body></body></html>`);
 
-  let css = await getAutoOutputResult({ name: "css", autoOutput: "file", autoOutputAttributes: { media: "print" } }, AUTO_OUTPUT_PAGE);
-  assert.match(css, /<link rel="stylesheet" media="print" href="\/[^"]+\.css"><\/head>/);
+  // Callback allows `file` output for extensions without built-in markup
+  let svg = await getAutoOutputResult({
+    name: "svg",
+    autoOutput: "file",
+    autoOutputHtml: () => `<link rel="preload" as="image" href="%s">`,
+  }, `<html><head></head><body></body></html>
+{% svg %}<svg></svg>{% endsvg %}`);
+  assert.match(svg, /<link rel="preload" as="image" href="\/[^"]+\.svg"><\/head>/);
 });
 
-test("autoOutputAttributes rejects non-objects (Issue #53)", () => {
+test("autoOutputHtml rejects non-functions and returns without %s (Issue #53)", async () => {
   let manager = new CodeManager("css");
-  assert.throws(() => manager.setAutoOutputAttributes("type=module"));
-  assert.throws(() => manager.setAutoOutputAttributes(["type"]));
+  assert.throws(() => manager.setAutoOutputHtml("<style></style>"));
+
+  await assert.rejects(getAutoOutputResult({ name: "css", autoOutput: "inline", autoOutputHtml: () => {} }, AUTO_OUTPUT_PAGE));
+  await assert.rejects(getAutoOutputResult({ name: "css", autoOutput: "inline", autoOutputHtml: () => "<style></style>" }, AUTO_OUTPUT_PAGE));
+});
+
+test("autoOutput size inlines small bundles (Issue #53)", async () => {
+  let content = await getAutoOutputResult({ name: "css", autoOutput: "size" }, AUTO_OUTPUT_PAGE);
+  assert.equal(content, `<!doctype html><html><head><meta charset="utf-8"><title>Title</title><style>* { color: red; }</style></head><body class="b"><p>Hi</p></body></html>`);
+});
+
+test("autoOutput size writes large bundles to a file (Issue #53)", async () => {
+  let content = await getAutoOutputResult({ name: "css", autoOutput: "size", autoOutputMaxInlineSize: 10 }, AUTO_OUTPUT_PAGE);
+  assert.match(content, /<title>Title<\/title><link rel="stylesheet" href="\/[^"]+\.css"><\/head>/);
+});
+
+test("autoOutput size measures transformed content (Issue #53)", async () => {
+  let content = await getAutoOutputResult({
+    name: "js",
+    autoOutput: "size",
+    autoOutputMaxInlineSize: 20,
+    transforms: [content => `/* a long license comment */${content}`],
+  }, `<html><head></head><body></body></html>
+{% js %}alert("hi");{% endjs %}`);
+  assert.match(content, /<head><script type="module" src="\/[^"]+\.js"><\/script><\/head>/);
+});
+
+test("autoOutput size passes the chosen mode to autoOutputHtml (Issue #53)", async () => {
+  let autoOutputHtml = ({ mode }) => mode === "inline" ? `<style data-inline>%s</style>` : `<link rel="stylesheet" href="%s" data-file>`;
+  let inline = await getAutoOutputResult({ name: "css", autoOutput: "size", autoOutputHtml }, AUTO_OUTPUT_PAGE);
+  assert.match(inline, /<style data-inline>\* \{ color: red; \}<\/style>/);
+
+  let file = await getAutoOutputResult({ name: "css", autoOutput: "size", autoOutputMaxInlineSize: 0, autoOutputHtml }, AUTO_OUTPUT_PAGE);
+  assert.match(file, /<link rel="stylesheet" href="\/[^"]+\.css" data-file>/);
+});
+
+test("autoOutputMaxInlineSize rejects invalid values (Issue #53)", () => {
+  let manager = new CodeManager("css");
+  assert.throws(() => manager.setAutoOutputMaxInlineSize(-1));
+  assert.throws(() => manager.setAutoOutputMaxInlineSize("4kb"));
 });

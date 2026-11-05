@@ -1,5 +1,4 @@
 import { createDebug } from "obug";
-import { escapeAttribute } from "entities/escape";
 
 const debug = createDebug("Eleventy:Bundle");
 
@@ -7,6 +6,11 @@ const debug = createDebug("Eleventy:Bundle");
 const NONCE_KEY = Symbol.for("@11ty/eleventy-plugin-bundle/nonce");
 globalThis[NONCE_KEY] ??= crypto.randomUUID().replaceAll("-", "").slice(0, 16);
 const PREFIX = `#BaBundle-${globalThis[NONCE_KEY]}`;
+
+const DEFAULT_AUTO_OUTPUT_HTML = {
+	css: { inline: `<style>%s</style>`, file: `<link rel="stylesheet" href="%s">` },
+	js: { inline: `<script type="module">%s</script>`, file: `<script type="module" src="%s"></script>` },
+};
 
 /* This class defers any `bundleGet` calls to a post-build transform step,
  * to allow `getBundle` to be called before all of the `css` additions have been processed
@@ -22,7 +26,7 @@ export class OutOfOrderRender {
 		this.managers = {};
 	}
 
-	// type if `get` (return string) or `file` (bundle writes to file, returns file url)
+	// type is `get` (return string), `file` (bundle writes to file, returns file url), or `auto` (autoOutput `size` markup)
 	static getAssetKey(type, name, bucket) {
 		if(Array.isArray(bucket)) {
 			bucket = bucket.join(",");
@@ -44,40 +48,39 @@ export class OutOfOrderRender {
 		return false;
 	}
 
-	static renderAttributes(attributes) {
-		let str = "";
-		for(let [name, value] of Object.entries(attributes)) {
-			if(value === false || value === null || value === undefined) {
-				continue;
+	// Returns tag HTML with a `%s` placeholder for `inline` or `file` mode
+	static getAutoOutputTemplate(manager, mode) {
+		let { html } = manager.getAutoOutput();
+		let ext = manager.fileExtension;
+		let markup;
+
+		if(typeof html === "function") {
+			markup = html({ mode, name: manager.name });
+		} else {
+			markup = DEFAULT_AUTO_OUTPUT_HTML[ext]?.[mode] ?? (mode === "inline" ? "%s" : undefined);
+			if(markup === undefined) {
+				throw new Error(`autoOutput: "${manager.getAutoOutput().mode}" requires a \`css\` or \`js\` file extension or an \`autoOutputHtml\` callback (bundle ${manager.name} uses ${ext}).`);
 			}
-			str += value === true ? ` ${name}` : ` ${name}="${escapeAttribute(String(value))}"`;
 		}
-		return str;
+
+		if(typeof markup !== "string" || !markup.includes("%s")) {
+			throw new Error(`autoOutputHtml for bundle ${manager.name} must return a string with a %s placeholder.`);
+		}
+
+		return markup;
 	}
 
 	static getAutoOutputMarkup(manager) {
-		let { mode, attributes = {} } = manager.getAutoOutput();
-		let ext = manager.fileExtension;
-		if(mode === "file") {
-			let url = OutOfOrderRender.getAssetKey("file", manager.name);
-			// The bundle URL is set last so it can’t be overridden.
-			if(ext === "css") {
-				return `<link${OutOfOrderRender.renderAttributes({ rel: "stylesheet", ...attributes, href: url })}>`;
-			}
-			if(ext === "js") {
-				return `<script${OutOfOrderRender.renderAttributes({ ...attributes, src: url })}></script>`;
-			}
-			throw new Error(`autoOutput: "file" requires a \`css\` or \`js\` file extension (bundle ${manager.name} uses ${ext}).`);
+		let { mode } = manager.getAutoOutput();
+		if(mode === "size") {
+			// Validate both templates now, the choice between them happens in `replaceAll` once the content size is known
+			OutOfOrderRender.getAutoOutputTemplate(manager, "inline");
+			OutOfOrderRender.getAutoOutputTemplate(manager, "file");
+			return OutOfOrderRender.getAssetKey("auto", manager.name);
 		}
 
-		let key = OutOfOrderRender.getAssetKey("get", manager.name);
-		if(ext === "css") {
-			return `<style${OutOfOrderRender.renderAttributes(attributes)}>${key}</style>`;
-		}
-		if(ext === "js") {
-			return `<script${OutOfOrderRender.renderAttributes(attributes)}>${key}</script>`;
-		}
-		return key;
+		let placeholder = OutOfOrderRender.getAssetKey(mode === "file" ? "file" : "get", manager.name);
+		return OutOfOrderRender.getAutoOutputTemplate(manager, mode).replaceAll("%s", () => placeholder);
 	}
 
 	static insertAt(content, location, markup) {
@@ -175,6 +178,20 @@ export class OutOfOrderRender {
 		return this.managers[name];
 	}
 
+	async getAutoOutputBySize(manager, pageData, bucket) {
+		let content = await manager.getForPage(pageData, bucket);
+		if(Buffer.byteLength(content) <= manager.getAutoOutput().maxInlineSize) {
+			return OutOfOrderRender.getAutoOutputTemplate(manager, "inline").replaceAll("%s", () => content);
+		}
+
+		let url = await manager.writeBundle(pageData, bucket, {
+			output: this.outputDirectory,
+			write: this.writeToFileSystem,
+			content,
+		});
+		return OutOfOrderRender.getAutoOutputTemplate(manager, "file").replaceAll("%s", () => url);
+	}
+
 	async replaceAll(pageData, stage = 0) {
 		this.injectAutoOutput(pageData, stage);
 
@@ -240,6 +257,8 @@ export class OutOfOrderRender {
 					output: this.outputDirectory,
 					write: this.writeToFileSystem,
 				});
+			} else if(type === "auto") {
+				return this.getAutoOutputBySize(manager, pageData, bucket);
 			}
 
 			return "";

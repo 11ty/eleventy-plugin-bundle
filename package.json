@@ -41,7 +41,6 @@
 	},
 	"dependencies": {
 		"@11ty/eleventy-utils": "^3.0.1",
-		"entities": "^9.0.0",
 		"obug": "^3.0.0",
 		"posthtml-match-helper": "^2.0.3"
 	}

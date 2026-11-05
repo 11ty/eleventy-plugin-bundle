@@ -36,8 +36,12 @@ function generateManager(name, bundleOptions = {}) {
 		manager.setAutoOutput(bundleOptions.autoOutput, bundleOptions.autoOutputLocation);
 	}
 
-	if(bundleOptions.autoOutputAttributes !== undefined) {
-		manager.setAutoOutputAttributes(bundleOptions.autoOutputAttributes);
+	if(bundleOptions.autoOutputMaxInlineSize !== undefined) {
+		manager.setAutoOutputMaxInlineSize(bundleOptions.autoOutputMaxInlineSize);
+	}
+
+	if(bundleOptions.autoOutputHtml !== undefined) {
+		manager.setAutoOutputHtml(bundleOptions.autoOutputHtml);
 	}
 
 	if(bundleOptions.transforms) {
