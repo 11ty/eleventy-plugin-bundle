@@ -6,7 +6,7 @@
 	"type": "module",
 	"scripts": {
 		"sample": "DEBUG=Eleventy:Bundle npx @11ty/eleventy --config=sample/sample-config.js --input=sample --serve",
-		"test": "npx ava"
+		"test": "node --test \"test/*.js\""
 	},
 	"publishConfig": {
 		"access": "public"
@@ -34,22 +34,8 @@
 		"email": "zachleatherman@gmail.com",
 		"url": "https://zachleat.com/"
 	},
-	"ava": {
-		"failFast": true,
-		"files": [
-			"test/*.js",
-			"test/*.mjs"
-		],
-		"watchMode": {
-			"ignoreChanges": [
-				"**/_site/**",
-				".cache"
-			]
-		}
-	},
 	"devDependencies": {
 		"@11ty/eleventy": "^4.0.0-alpha.10",
-		"ava": "^8.3.0",
 		"postcss": "^8.5.32",
 		"postcss-nested": "^7.0.2",
 		"sass": "^1.107.1"
