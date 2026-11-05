@@ -11,6 +11,8 @@ export class CodeManager {
 	// code is hoisted to this bucket when necessary
 	static HOISTED_BUCKET_NAME = "default";
 
+	static AUTO_OUTPUT_LOCATIONS = ["<title>", "</head>", "<body>", "</body>"];
+
 	constructor(name) {
 		this.name = name;
 		this.trimOnAdd = true;
@@ -23,6 +25,9 @@ export class CodeManager {
 		this.bundleExportKey = "bundle";
 		this.runsAfterHtmlTransformer = false;
 		this.pluckedSelector = undefined;
+		this.autoOutput = false;
+		this.autoOutputLocation = "</head>";
+		this.autoOutputAttributes = {};
 
 		if(name === "js") {
 			this.pruneEmptySelector = "script";
@@ -77,6 +82,41 @@ export class CodeManager {
 
 	getBundleExportKey() {
 		return this.bundleExportKey;
+	}
+
+	// mode is `inline` (or `true`), `file`, or `false`
+	setAutoOutput(mode, location = "</head>") {
+		if(mode === true) {
+			mode = "inline";
+		}
+		if(mode && mode !== "inline" && mode !== "file") {
+			throw new Error(`Invalid autoOutput value for bundle ${this.name}: ${mode}. Expected "inline", "file", or false.`);
+		}
+		if(!CodeManager.AUTO_OUTPUT_LOCATIONS.includes(location)) {
+			throw new Error(`Invalid autoOutputLocation for bundle ${this.name}: ${location}. Expected one of: ${CodeManager.AUTO_OUTPUT_LOCATIONS.join(", ")}`);
+		}
+
+		this.autoOutput = mode || false;
+		this.autoOutputLocation = location;
+	}
+
+	// `true` renders a boolean attribute, `false`/`null`/`undefined` omits it
+	setAutoOutputAttributes(attributes = {}) {
+		if(!attributes || typeof attributes !== "object" || Array.isArray(attributes)) {
+			throw new Error(`Invalid autoOutputAttributes for bundle ${this.name}: object expected.`);
+		}
+		this.autoOutputAttributes = attributes;
+	}
+
+	getAutoOutput() {
+		if(!this.autoOutput) {
+			return false;
+		}
+		return {
+			mode: this.autoOutput,
+			location: this.autoOutputLocation,
+			attributes: this.autoOutputAttributes,
+		};
 	}
 
 	reset() {

@@ -32,6 +32,14 @@ function generateManager(name, bundleOptions = {}) {
 		manager.setBundleDirectory(bundleOptions.toFileDirectory);
 	}
 
+	if(bundleOptions.autoOutput !== undefined) {
+		manager.setAutoOutput(bundleOptions.autoOutput, bundleOptions.autoOutputLocation);
+	}
+
+	if(bundleOptions.autoOutputAttributes !== undefined) {
+		manager.setAutoOutputAttributes(bundleOptions.autoOutputAttributes);
+	}
+
 	if(bundleOptions.transforms) {
 		manager.setTransforms(bundleOptions.transforms);
 	}

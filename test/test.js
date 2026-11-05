@@ -1067,3 +1067,85 @@ test("getBundleFileUrl in an attribute survives a posthtml transform", async () 
   assert.equal(results.length, 1);
   assert.equal(normalize(results[0].content), `<!doctype html><html><head><script type="module" src="/I-aF1T6Gxf.js"></script></head><body><p>After</p></body></html>`);
 });
+
+async function getAutoOutputResult(bundleOptions, template) {
+  let elev = new Eleventy("./test/stubs-virtual/", undefined, {
+    config: $config => {
+      // see testing note at the top of this file
+      $config.on("eleventy.beforeConfig", () => {
+        $config.addPlugin(bundlePlugin, { bundles: false, force: true, immediate: true });
+        $config.addBundle(bundleOptions.name, bundleOptions);
+      });
+
+      $config.addTemplate("index.liquid", template);
+    }
+  });
+
+  let results = await elev.toJSON();
+  assert.equal(results.length, 1);
+  return normalize(results[0].content);
+}
+
+const AUTO_OUTPUT_PAGE = `<!doctype html><html><head><meta charset="utf-8"><title>Title</title></head><body class="b"><p>Hi</p></body></html>
+{% css %}* { color: red; }{% endcss %}`;
+
+test("autoOutput inline at each location (Issue #53)", async () => {
+  let expected = {
+    "<title>": `<!doctype html><html><head><meta charset="utf-8"><title>Title</title><style>* { color: red; }</style></head><body class="b"><p>Hi</p></body></html>`,
+    "</head>": `<!doctype html><html><head><meta charset="utf-8"><title>Title</title><style>* { color: red; }</style></head><body class="b"><p>Hi</p></body></html>`,
+    "<body>": `<!doctype html><html><head><meta charset="utf-8"><title>Title</title></head><body class="b"><style>* { color: red; }</style><p>Hi</p></body></html>`,
+    "</body>": `<!doctype html><html><head><meta charset="utf-8"><title>Title</title></head><body class="b"><p>Hi</p><style>* { color: red; }</style></body></html>`,
+  };
+
+  for(let location in expected) {
+    let content = await getAutoOutputResult({ name: "css", autoOutput: "inline", autoOutputLocation: location }, AUTO_OUTPUT_PAGE);
+    assert.equal(content, expected[location], location);
+  }
+});
+
+test("autoOutput defaults to </head> (Issue #53)", async () => {
+  let content = await getAutoOutputResult({ name: "css", autoOutput: true }, AUTO_OUTPUT_PAGE);
+  assert.equal(content, `<!doctype html><html><head><meta charset="utf-8"><title>Title</title><style>* { color: red; }</style></head><body class="b"><p>Hi</p></body></html>`);
+});
+
+test("autoOutput file (Issue #53)", async () => {
+  let content = await getAutoOutputResult({ name: "js", autoOutput: "file", autoOutputLocation: "</body>" }, `<!doctype html><html><head></head><body><p>Hi</p></body></html>
+{% js %}alert("hi");{% endjs %}`);
+  assert.equal(content, `<!doctype html><html><head></head><body><p>Hi</p><script src="/I-aF1T6Gxf.js"></script></body></html>`);
+});
+
+test("autoOutput skipped when the page already uses getBundle (Issue #53)", async () => {
+  let content = await getAutoOutputResult({ name: "css", autoOutput: "inline" }, `<html><head></head><body><style>{% getBundle "css" %}</style></body></html>
+{% css %}* { color: red; }{% endcss %}`);
+  assert.equal(content, `<html><head></head><body><style>* { color: red; }</style></body></html>`);
+});
+
+test("autoOutput skipped for empty bundles (Issue #53)", async () => {
+  let content = await getAutoOutputResult({ name: "css", autoOutput: "inline" }, `<html><head></head><body></body></html>`);
+  assert.equal(content, `<html><head></head><body></body></html>`);
+});
+
+test("autoOutput rejects invalid options (Issue #53)", () => {
+  let manager = new CodeManager("css");
+  assert.throws(() => manager.setAutoOutput("inline", "<header>"));
+  assert.throws(() => manager.setAutoOutput("external"));
+});
+
+test("autoOutputAttributes on inline and file output (Issue #53)", async () => {
+  let inline = await getAutoOutputResult({ name: "js", autoOutput: "inline", autoOutputAttributes: { type: "module", nomodule: false, "data-x": `a"b` } }, `<html><head></head><body></body></html>
+{% js %}alert("hi");{% endjs %}`);
+  assert.equal(inline, `<html><head><script type="module" data-x="a&quot;b">alert("hi");</script></head><body></body></html>`);
+
+  let file = await getAutoOutputResult({ name: "js", autoOutput: "file", autoOutputAttributes: { type: "module", defer: true, src: "/ignored.js" } }, `<html><head></head><body></body></html>
+{% js %}alert("hi");{% endjs %}`);
+  assert.equal(file, `<html><head><script type="module" defer src="/I-aF1T6Gxf.js"></script></head><body></body></html>`);
+
+  let css = await getAutoOutputResult({ name: "css", autoOutput: "file", autoOutputAttributes: { media: "print" } }, AUTO_OUTPUT_PAGE);
+  assert.match(css, /<link rel="stylesheet" media="print" href="\/[^"]+\.css"><\/head>/);
+});
+
+test("autoOutputAttributes rejects non-objects (Issue #53)", () => {
+  let manager = new CodeManager("css");
+  assert.throws(() => manager.setAutoOutputAttributes("type=module"));
+  assert.throws(() => manager.setAutoOutputAttributes(["type"]));
+});

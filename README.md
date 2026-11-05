@@ -63,6 +63,15 @@ export default function(eleventyConfig) {
 		// (Optional) In 11ty.js templates, having a named export of `bundle` will populate your bundles.
 		bundleExportKey: "bundle",
 		// bundleExportKey: false, // disable this feature.
+
+		// (Optional) Add the bundle to every page automatically: "inline", "file", or false (default)
+		autoOutput: false,
+
+		// (Optional) Where autoOutput goes: "<title>", "</head>" (default), "<body>", or "</body>"
+		autoOutputLocation: "</head>",
+
+		// (Optional) HTML attributes for the autoOutput tag (`true` for boolean attributes, `false` to omit)
+		autoOutputAttributes: {},
 	});
 };
 ```
@@ -132,6 +141,25 @@ Writes the bundle content to a content-hashed file location in your output direc
 ```
 
 > **NOTE:** Writing bundles to files will likely be slower for empty-cache first time visitors but better cached in the browser for repeat-views (and across multiple pages, too).
+
+### Automatic output
+
+Use `autoOutput` to add a bundle to pages without a `getBundle` or `getBundleFileUrl` call, useful for plugins that ship their own CSS or JS.
+
+```js
+eleventyConfig.addBundle("css", {
+	autoOutput: "inline", // <style>…</style>
+	// autoOutput: "file", // <link rel="stylesheet" href="…">
+	autoOutputLocation: "</head>",
+	autoOutputAttributes: { media: "print" },
+});
+```
+
+* `"</head>"` and `"</body>"` insert before the closing tag, `"<body>"` inserts after the opening tag, and `"<title>"` inserts after the `<title>` element.
+* Markup is chosen by file extension: `css` uses `<style>` or `<link>`, `js` uses `<script>`, and anything else is inlined as-is (`file` requires `css` or `js`).
+* `autoOutputAttributes` are added to the `<style>`, `<link>`, or `<script>` tag, but can’t override the bundle `href` or `src`.
+* Only the `default` bucket is output, and nothing is added if it’s empty or the page already references it via `getBundle` or `getBundleFileUrl`.
+* Disable a plugin’s automatic output in your config with `eleventyConfig.getBundleManagers()["my-plugin-bundle"].setAutoOutput(false)`.
 
 ### Asset bucketing
 

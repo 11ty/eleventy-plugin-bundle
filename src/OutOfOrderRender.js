@@ -44,6 +44,93 @@ export class OutOfOrderRender {
 		return false;
 	}
 
+	static renderAttributes(attributes) {
+		let str = "";
+		for(let [name, value] of Object.entries(attributes)) {
+			if(value === false || value === null || value === undefined) {
+				continue;
+			}
+			str += value === true ? ` ${name}` : ` ${name}="${String(value).replaceAll("&", "&amp;").replaceAll(`"`, "&quot;")}"`;
+		}
+		return str;
+	}
+
+	static getAutoOutputMarkup(manager) {
+		let { mode, attributes = {} } = manager.getAutoOutput();
+		let ext = manager.fileExtension;
+		if(mode === "file") {
+			let url = OutOfOrderRender.getAssetKey("file", manager.name);
+			// The bundle URL is set last so it can’t be overridden.
+			if(ext === "css") {
+				return `<link${OutOfOrderRender.renderAttributes({ rel: "stylesheet", ...attributes, href: url })}>`;
+			}
+			if(ext === "js") {
+				return `<script${OutOfOrderRender.renderAttributes({ ...attributes, src: url })}></script>`;
+			}
+			throw new Error(`autoOutput: "file" requires a \`css\` or \`js\` file extension (bundle ${manager.name} uses ${ext}).`);
+		}
+
+		let key = OutOfOrderRender.getAssetKey("get", manager.name);
+		if(ext === "css") {
+			return `<style${OutOfOrderRender.renderAttributes(attributes)}>${key}</style>`;
+		}
+		if(ext === "js") {
+			return `<script${OutOfOrderRender.renderAttributes(attributes)}>${key}</script>`;
+		}
+		return key;
+	}
+
+	static insertAt(content, location, markup) {
+		let match;
+		if(location === "<title>") {
+			match = content.match(/<title\b[^>]*>[\s\S]*?<\/title\s*>/i);
+		} else if(location === "<body>") {
+			match = content.match(/<body\b[^>]*>/i);
+		} else if(location === "</head>") {
+			match = content.match(/<\/head\s*>/i);
+		} else if(location === "</body>") {
+			match = Array.from(content.matchAll(/<\/body\s*>/gi)).pop();
+		}
+
+		if(!match) {
+			return false;
+		}
+
+		// Closing tags insert before, opening tags (and <title> elements) insert after.
+		let index = location.startsWith("</") ? match.index : match.index + match[0].length;
+		return content.slice(0, index) + markup + content.slice(index);
+	}
+
+	injectAutoOutput(pageData, stage) {
+		let referenced = new Set();
+		for(let match of this.findAll()) {
+			if(typeof match !== "string" && match.bucket.split(",").includes("default")) {
+				referenced.add(match.name);
+			}
+		}
+
+		for(let name in this.managers) {
+			let manager = this.managers[name];
+			// Older CodeManager copies (duplicate package installs) don’t support autoOutput
+			let autoOutput = typeof manager.getAutoOutput === "function" && manager.getAutoOutput();
+			if(!autoOutput || referenced.has(name)) {
+				continue;
+			}
+
+			let isDelayed = typeof manager.isDelayed === "function" && manager.isDelayed();
+			if(isDelayed !== (stage > 0) || manager.getRawForPage(pageData).size === 0) {
+				continue;
+			}
+
+			let content = OutOfOrderRender.insertAt(this.content, autoOutput.location, OutOfOrderRender.getAutoOutputMarkup(manager));
+			if(content === false) {
+				debug("Skipping autoOutput for %o on %o: no %o found.", name, pageData.inputPath, autoOutput.location);
+				continue;
+			}
+			this.content = content;
+		}
+	}
+
 	setAssetManager(name, assetManager) {
 		this.managers[name] = assetManager;
 	}
@@ -89,6 +176,8 @@ export class OutOfOrderRender {
 	}
 
 	async replaceAll(pageData, stage = 0) {
+		this.injectAutoOutput(pageData, stage);
+
 		let matches = this.findAll();
 		let availableBucketsForPage = this.getAllBucketsForPage(pageData);
 		let usedBucketsOnPage = new Set();
