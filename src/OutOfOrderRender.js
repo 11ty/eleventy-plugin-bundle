@@ -1,11 +1,10 @@
-import { randomBytes } from "node:crypto";
 import { createDebug } from "obug";
 
 const debug = createDebug("Eleventy:Bundle");
 
 // Per-process nonce so literal key text in page content is never treated as a placeholder; shared across duplicate copies of this package.
 const NONCE_KEY = Symbol.for("@11ty/eleventy-plugin-bundle/nonce");
-globalThis[NONCE_KEY] ??= randomBytes(8).toString("hex");
+globalThis[NONCE_KEY] ??= crypto.randomUUID().replaceAll("-", "").slice(0, 16);
 const PREFIX = `#BaBundle-${globalThis[NONCE_KEY]}`;
 
 /* This class defers any `bundleGet` calls to a post-build transform step,
