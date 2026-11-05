@@ -1,4 +1,5 @@
 import { createDebug } from "obug";
+import { escapeAttribute } from "entities/escape";
 
 const debug = createDebug("Eleventy:Bundle");
 
@@ -49,7 +50,7 @@ export class OutOfOrderRender {
 			if(value === false || value === null || value === undefined) {
 				continue;
 			}
-			str += value === true ? ` ${name}` : ` ${name}="${String(value).replaceAll("&", "&amp;").replaceAll(`"`, "&quot;")}"`;
+			str += value === true ? ` ${name}` : ` ${name}="${escapeAttribute(String(value))}"`;
 		}
 		return str;
 	}
