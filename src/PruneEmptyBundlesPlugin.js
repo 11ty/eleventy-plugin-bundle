@@ -1,5 +1,5 @@
 import { createDebug } from "obug";
-import matchHelper from "posthtml-match-helper";
+import matchHelper from "@11ty/posthtml-match-selector";
 
 import { OutOfOrderRender } from "./OutOfOrderRender.js"
 
