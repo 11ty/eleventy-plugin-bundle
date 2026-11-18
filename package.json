@@ -35,9 +35,9 @@
 	"author": "Zach Leatherman (https://zachleat.com/)",
 	"devDependencies": {
 		"@11ty/eleventy": "^4.0.0-alpha.10",
-		"postcss": "^8.5.32",
+		"postcss": "^8.5.33",
 		"postcss-nested": "^9.0.1",
-		"sass": "^1.107.1"
+		"sass": "^1.108.2"
 	},
 	"dependencies": {
 		"@11ty/eleventy-utils": "^3.0.1",
